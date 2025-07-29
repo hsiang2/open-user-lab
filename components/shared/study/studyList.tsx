@@ -1,4 +1,5 @@
 import StudyCardResearcher from "./StudyCardResearcher";
+import StudyCardExplore from "./studyCardExplore";
 
 const StudyList = ({data, type,  limit}: {data: any; type: string; limit?: number}) => {
     const limitedData = limit ? data.slice(0, limit) : data;
@@ -11,7 +12,7 @@ const StudyList = ({data, type,  limit}: {data: any; type: string; limit?: numbe
                         <StudyCardResearcher key={study.id} study={study} />: 
                         type === "partipant" ? 
                         <></> : 
-                        <></>
+                        <StudyCardExplore key={study.id} study={study} />
                         
                     ))}
                 </div>

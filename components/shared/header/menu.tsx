@@ -9,7 +9,7 @@ const Menu = () => {
             {/* <nav > */}
             <nav className="hidden md:flex">
                 <Button asChild variant='ghost'>
-                    <Link href='/exploe'>
+                    <Link href='/explore'>
                         Explore
                     </Link>
                 </Button>

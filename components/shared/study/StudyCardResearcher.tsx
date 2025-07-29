@@ -8,13 +8,13 @@ const StudyCardResearcher = ({ study }: { study: any }) => {
         // className="w-full max-w-sm"
         >
             <CardHeader >
-                <Link href={`/my-studies/${study.id}`}>
+                <Link href={`/my-studies/${study.slug}`}>
                     <h2 className="text-subtitle">{study.name}</h2>
                 </Link>
             </CardHeader>
             <CardContent>
                 <Button asChild>
-                    <Link href={`/my-studies/${study.id}`}>
+                    <Link href={`/my-studies/${study.slug}`}>
                         View
                     </Link>
                 </Button>

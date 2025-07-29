@@ -1,0 +1,325 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Study {
+  id  String @id @default(cuid())
+  name  String
+  slug  String @unique
+  description  String
+  status StudyStatus
+  recruitmentStatus RecruitmentStatus
+  createdAt           DateTime @default(now())
+
+  collaborators          Collaborator[]
+  participations Participation[]
+  participantSaved     ParticipantSaved[]
+  participantWorkflow  ParticipantWorkflow?
+  studyWorkflow        StudyWorkflow? 
+  criteria              Criteria[]
+  recruitment           Recruitment?
+  form                  Form?
+  StudySaved StudySaved[]
+}
+
+model User {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  password     String
+  isResearcher Boolean        @default(false)
+  institution  String?
+  profile      UserProfile?
+  collaborations Collaborator[]
+  participations Participation[]
+  savedStudies StudySaved[]
+
+  ParticipantSaved ParticipantSaved[]
+}
+
+model UserProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  birth      DateTime?
+  gender     String?
+  language   String?
+  website    String?
+  region     String?
+  background String?
+  avatarBase       String?
+  avatarAccessory  String?
+  avatarBg         String?
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model Collaborator {
+  id        String  @id @default(cuid())
+  study     Study   @relation(fields: [studyId], references: [id])
+  studyId   String
+  user      User    @relation(fields: [userId], references: [id])
+  userId    String
+  role      CollaboratorRole  
+  addedAt   DateTime @default(now())
+
+  @@unique([studyId, userId]) 
+}
+
+model Participation {
+  id                 String   @id @default(cuid())
+  userId             String
+  studyId            String
+  status             ParticipationStatus
+  inviteStatus       InviteStatus
+  appliedAt          DateTime?
+  invitedAt          DateTime?
+  user               User     @relation(fields: [userId], references: [id])
+  study              Study    @relation(fields: [studyId], references: [id])
+  formResponses      FormResponse[]
+  workflowStepStatuses ParticipantWorkflowStepStatus[]
+}
+
+model ParticipantWorkflowStepStatus {
+  id            String   @id @default(cuid())
+  stepId        String
+  participationId String
+  status        StepStatus
+  completedAt   DateTime?
+
+  step          ParticipantWorkflowStep @relation(fields: [stepId], references: [id])
+  participation Participation           @relation(fields: [participationId], references: [id])
+}
+
+model ParticipantWorkflowStep {
+  id              String   @id @default(cuid())
+  workflowId      String
+  name            String
+  order           Int
+  noteResearcher  String?
+  noteParticipant String?
+  deadline        DateTime?
+
+  workflow        ParticipantWorkflow             @relation(fields: [workflowId], references: [id])
+  statuses        ParticipantWorkflowStepStatus[]
+}
+
+model ParticipantWorkflow {
+  id        String   @id @default(cuid())
+  studyId   String  @unique
+  study     Study    @relation(fields: [studyId], references: [id])
+  steps     ParticipantWorkflowStep[]
+}
+
+model StudyWorkflow {
+  id        String             @id @default(cuid())
+  studyId   String             @unique
+  study     Study              @relation(fields: [studyId], references: [id])
+  steps     StudyWorkflowStep[]
+  
+}
+
+model StudyWorkflowStep {
+  id              String                @id @default(cuid())
+  workflowId      String
+  name            String
+  order           Int
+  note            String?
+  deadline        DateTime?
+  workflow        StudyWorkflow         @relation(fields: [workflowId], references: [id])
+  statuses        StudyWorkflowStepStatus[]
+}
+
+model StudyWorkflowStepStatus {
+  id        String           @id @default(cuid())
+  stepId    String
+  studyId   String           
+  status    StepStatus
+  completedAt DateTime?
+
+  step      StudyWorkflowStep @relation(fields: [stepId], references: [id])
+}
+
+
+model ParticipantSaved {
+  id            String   @id @default(cuid())
+  participantId String
+  studyId       String
+
+  participant   User     @relation(fields: [participantId], references: [id])
+  study         Study    @relation(fields: [studyId], references: [id])
+}
+
+model StudySaved {
+  id        String   @id @default(cuid())
+  userId    String
+  studyId   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  study     Study    @relation(fields: [studyId], references: [id])
+}
+
+
+model Criteria {
+  id          String   @id @default(cuid())
+  studyId     String
+  type        ProfileField
+  value       String
+  matchLevel  CriteriaMatchLevel
+  study       Study        @relation(fields: [studyId], references: [id])
+}
+
+model Recruitment {
+  id        String   @id @default(cuid())
+  studyId   String @unique
+  study     Study    @relation(fields: [studyId], references: [id])
+  description String?
+  reward     String?
+  format     String?
+  duration   String?
+  image      String?
+  thankYouMessage String?
+}
+
+model Form {
+  id          String   @id @default(cuid())
+  studyId     String @unique
+  description String?
+  study       Study    @relation(fields: [studyId], references: [id])
+  questions   FormQuestion[]
+  responses   FormResponse[]
+}
+
+model FormQuestion {
+  id          String   @id @default(cuid())
+  formId      String
+  text        String
+  type        QuestionType
+  required    Boolean
+  evaluationType EvaluationType
+  options     FormOption[]
+  form        Form     @relation(fields: [formId], references: [id])
+
+  answers FormAnswer[]
+}
+
+model FormOption {
+  id       String   @id @default(cuid())
+  questionId String
+  text     String
+  score    Int?
+  question FormQuestion @relation(fields: [questionId], references: [id])
+
+  selectedInAnswers FormAnswerSelectedOption[]
+}
+
+model FormResponse {
+  id         String   @id @default(cuid())
+  participationId String
+  formId          String
+  submittedAt DateTime
+  answers     FormAnswer[]
+  participation Participation @relation(fields: [participationId], references: [id])
+form  Form          @relation(fields: [formId], references: [id]) 
+}
+
+model FormAnswer {
+  id        String   @id @default(cuid())
+  responseId String
+  questionId      String         
+  text      String?
+
+   response   FormResponse @relation(fields: [responseId], references: [id])
+  question   FormQuestion @relation(fields: [questionId], references: [id])
+  selectedOptions FormAnswerSelectedOption[]
+}
+
+model FormAnswerSelectedOption {
+  id           String   @id @default(cuid())
+  answerId     String
+  optionId     String
+
+  answer       FormAnswer   @relation(fields: [answerId], references: [id])
+  option       FormOption   @relation(fields: [optionId], references: [id])
+
+  @@unique([answerId, optionId]) 
+}
+
+enum QuestionType {
+  text
+  single_choice
+  multiple_choice
+}
+
+enum EvaluationType {
+  automatic
+  manual
+  none
+}
+
+
+
+enum StudyStatus {
+  draft
+  ongoing
+  ended
+}
+
+enum RecruitmentStatus {
+  open
+  closed
+}
+
+enum ParticipationStatus {
+  Applied
+  Invited
+  Selected
+  Rejected
+  Withdrawn
+  Completed
+}
+
+enum InviteStatus {
+  pending
+  accepted
+  rejected
+}
+
+enum StepStatus {
+  todo
+  completed
+}
+
+enum CollaboratorRole {
+  owner
+  editor 
+  viewer
+}
+
+enum CriteriaMatchLevel {
+  Required 
+  Optional
+  // No Preference
+}
+
+enum ProfileField {
+  gender
+  language
+  region
+  background
+  birth
+}
+
+
+
+
