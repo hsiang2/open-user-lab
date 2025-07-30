@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -87,6 +88,7 @@ model Participation {
   study              Study    @relation(fields: [studyId], references: [id])
   formResponses      FormResponse[]
   workflowStepStatuses ParticipantWorkflowStepStatus[]
+  thankYouCertificate ThankYouCertificate?
 }
 
 model ParticipantWorkflowStepStatus {
@@ -187,7 +189,10 @@ model Recruitment {
   reward     String?
   format     String?
   duration   String?
+  sessionDetail String?
+  criteriaDescription String?
   image      String?
+  avatarResearcher      String?
   thankYouMessage String?
 }
 
@@ -254,6 +259,19 @@ model FormAnswerSelectedOption {
 
   @@unique([answerId, optionId]) 
 }
+
+model ThankYouCertificate {
+  id               String   @id @default(cuid())
+  participationId  String   @unique
+  participation    Participation @relation(fields: [participationId], references: [id])
+  
+  image String?
+  message            String?
+  avatarParticipant String?
+  avatarResearcher String?
+  createdAt        DateTime @default(now())
+}
+
 
 enum QuestionType {
   text

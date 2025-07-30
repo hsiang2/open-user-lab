@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Study } from "@/types";
 import Link from "next/link";
 
-const StudyCardExplore = ({ study }: { study: any }) => {
+const StudyCardExplore = ({ study }: { study: Study }) => {
     return ( 
         <Card 
         // className="w-full max-w-sm"

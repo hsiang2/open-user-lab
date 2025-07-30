@@ -1,3 +1,4 @@
+
 import StudyList from "@/components/shared/study/studyList";
 import { getLatestStudies } from "@/lib/actions/study.actions";
 

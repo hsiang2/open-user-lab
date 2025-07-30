@@ -1,4 +1,4 @@
-import StudyList from "@/components/shared/study/studyList";
+// import StudyList from "@/components/shared/study/studyList";
 
 const MyStudiesPage = () => {
   return (

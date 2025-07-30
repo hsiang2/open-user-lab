@@ -81,7 +81,10 @@ const sampleData = {
         "format": "online",
         "duration": "15 minutes",
         "image": "color-study.jpg",
-        "thankYouMessage": "Thanks for joining!"
+        "thankYouMessage": "Thanks for joining!",
+        "avatarResearcher": "cat",
+        "criteriaDescription": "We are looking for adults aged 18–30 who speak English and are familiar with mobile apps.",
+        "sessionDetail": "The study will take around 20 minutes and can be completed online using your own device."
       }
     }
   ],
