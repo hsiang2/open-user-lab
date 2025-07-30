@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MenuIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -35,7 +35,7 @@ const Menu = () => {
                 </Button>
                 <Button asChild variant='ghost'>
                     <Link href='/profile'>
-                        [User's name]
+                        [User name]
                     </Link>
                 </Button>
             </nav>
@@ -72,7 +72,7 @@ const Menu = () => {
                         </Button>
                         <Button asChild variant='ghost'>
                             <Link href='/profile'>
-                                [User's name]
+                                [User name]
                             </Link>
                         </Button>
                     </SheetContent>
