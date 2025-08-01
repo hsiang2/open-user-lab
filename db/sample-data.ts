@@ -1,10 +1,12 @@
+import { hashSync } from "bcrypt-ts-edge";
+
 const sampleData = {
   "users": [
     {
       "id": "user1",
       "name": "Alice",
       "email": "alice@example.com",
-      "password": "hashedpassword1",
+      "password": hashSync('123456', 10),
       "isResearcher": true,
       "institution": "Example University",
       "profile": {
@@ -23,7 +25,7 @@ const sampleData = {
       "id": "user2",
       "name": "Bob",
       "email": "bob@example.com",
-      "password": "hashedpassword2",
+      "password": hashSync('123456', 10),
       "isResearcher": false,
       "institution": null,
       "profile": {

@@ -2,6 +2,7 @@ import { Study } from "@/types";
 import StudyCardResearcher from "./StudyCardResearcher";
 import StudyCardExplore from "./studyCardExplore";
 
+
 const StudyList = ({data, type,  limit}: {data: Study[]; type: string; limit?: number}) => {
     const limitedData = limit ? data.slice(0, limit) : data;
     return ( 
