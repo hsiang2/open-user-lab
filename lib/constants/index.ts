@@ -15,5 +15,109 @@ export const signUpDefaultValues = {
     password: '123456',
     confirmPassword: '123456',
     isResearcher: "true",
-    institution: "University of Nottingham",
+    // institution: "University of Nottingham",
+    institution: "",
 }
+
+export const BACKGROUND_CATEGORIES = [
+    "Computing / IT",
+    "Psychology",
+    "Education",
+    "Design",
+    "Engineering",
+    "Business / Management",
+    "Social Sciences",
+    "Arts / Humanities",
+    "Law / Politics",
+    "Healthcare / Medicine",
+    "Natural / Environmental Sciences",
+    "Other",
+    "Prefer not to say",
+  ] as const;
+
+  export const REGIONS = [
+    "United Kingdom",
+    "Europe (excluding UK)",
+    "North America",
+    "Central / South America",
+    "East Asia",
+    "South Asia",
+    "Southeast Asia",
+    "Africa",
+    "Oceania",
+    "Middle East",
+    "Prefer not to say",
+  ] as const;
+  
+  export const GENDERS = [
+    "Female",
+    "Male",
+    "Non-binary",
+    "Self-describe",
+    "Prefer not to say",
+  ] as const;
+
+  export const LANGUAGES = [
+    "English",
+    "Mandarin Chinese",
+    "Cantonese",
+    "Japanese",
+    "Korean",
+    "French",
+    "Spanish",
+    "German",
+    "Portuguese",
+    "Russian",
+    "Arabic",
+    "Hindi",
+    "Bengali",
+    "Urdu",
+    "Turkish",
+    "Vietnamese",
+    "Thai",
+    "Indonesian",
+    "Other"
+  ] as const;
+
+  export const AVATAR_ACCESSORY = [
+    {
+        key: null,
+        label: "None",
+        role: "any", 
+      },
+    {
+      key: "accessory_participant_eeg",
+      label: "EEG Cap",
+      role: "participant",
+    },
+    {
+        key: "accessory_participant_vr",
+        label: "VR headset",
+        role: "participant",
+    },
+    {
+      key: "accessory_researcher_office",
+      label: "Office",
+      role: "researcher",
+    },
+    {
+        key: "accessory_researcher_lab",
+        label: "Lab",
+        role: "researcher",
+      },
+  ] as const;
+  
+  export const AVATAR_STYLE = [
+    "style_white",
+    "style_orange",
+    "style_brown",
+  ] as const;
+  
+  
+  export const AVATAR_BACKGROUND = [
+    "bg_green",
+    "bg_red",
+    "bg_blue",
+    "bg_purple",
+    "bg_brown",
+  ] as const;

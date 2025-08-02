@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signUpDefaultValues } from "@/lib/constants";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { signUpUser } from "@/lib/actions/user.action";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -16,6 +16,8 @@ const SignUpForm = () => {
         success: false,
         message: ''
     })
+
+    const [isResearcher, setIsResearcher] = useState("true");
 
     // const searchParams = useSearchParams();
     // const callbackUrl = searchParams.get('callbackUrl') || '/'
@@ -77,7 +79,11 @@ const SignUpForm = () => {
                 </div>
                 <div>
                     <Label htmlFor='isResearcher'>Are you a researcher?</Label>
-                    <RadioGroup  name="isResearcher" defaultValue="true">
+                    <RadioGroup  
+                        name="isResearcher" 
+                        defaultValue="true"
+                        onValueChange={setIsResearcher}
+                    >
                         <div className="flex items-center gap-3">
                             <RadioGroupItem value="true" id="r1" />
                             <Label htmlFor="r1">Yes</Label>
@@ -88,16 +94,19 @@ const SignUpForm = () => {
                         </div>
                     </RadioGroup>
                 </div>
-                <div>
-                    <Label htmlFor='institution'>Institution</Label>
-                    <Input
-                    id='institution'
-                    name='institution'
-                    type='text'
-                    autoComplete='institution'
-                    defaultValue={signUpDefaultValues.institution}
-                    />
-                </div>
+                {isResearcher === "true" && (
+                    <div>
+                        <Label htmlFor='institution'>Institution</Label>
+                        <Input
+                        id='institution'
+                        name='institution'
+                        type='text'
+                        autoComplete='institution'
+                        defaultValue={signUpDefaultValues.institution}
+                        />
+                    </div>
+                )}
+               
                 <div>
                     <SignUpButton />
                 </div>

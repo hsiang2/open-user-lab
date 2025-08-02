@@ -15,18 +15,24 @@ import SignUpForm from './SignUpForm';
     title: 'Sign Up',
   };
   
-  const SignUpPage = async (props: {
-    searchParams: Promise<{
-      callbackUrl: string;
-    }>;
-  }) => {
-    const { callbackUrl } = await props.searchParams;
+  const SignUpPage = async (
+  //   props: {
+  //   searchParams: Promise<{
+  //     callbackUrl: string;
+  //   }>;
+  // }
+  ) => {
+    // const { callbackUrl } = await props.searchParams;
   
     const session = await auth();
-  
+
     if (session) {
-      return redirect(callbackUrl || '/');
+        return redirect('/onboarding/avatar');
     }
+  
+    // if (session) {
+    //   return redirect(callbackUrl || '/');
+    // }
   
     return (
       <div className='w-full max-w-md mx-auto'>

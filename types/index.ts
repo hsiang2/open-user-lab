@@ -1,4 +1,4 @@
-import { insertStudySchema } from '@/lib/validators'
+import { avatarSchema, insertStudySchema } from '@/lib/validators'
 import { z } from 'zod'
 
 export type Study = z.infer<typeof insertStudySchema> & {
@@ -16,3 +16,5 @@ export type Study = z.infer<typeof insertStudySchema> & {
     // form?:                  Form;
     // StudySaved: StudySaved[];
 };
+
+export type Avatar = z.infer<typeof avatarSchema>;

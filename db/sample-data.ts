@@ -12,13 +12,13 @@ const sampleData = {
       "profile": {
         "birth": "1995-06-15T00:00:00.000Z",
         "gender": "female",
-        "language": "en",
+        "language": ["English"],
         "website": "https://alice-lab.example.com",
         "region": "UK",
-        "background": "HCI researcher",
-        "avatarBase": "cat",
-        "avatarAccessory": "hat",
-        "avatarBg": "blue"
+        "background": ["Psychology", "Design"],
+        "avatarBase": "base_brown",
+        "avatarAccessory": "accessory_researcher_office",
+        "avatarBg": "bg_blue"
       }
     },
     {
@@ -31,13 +31,13 @@ const sampleData = {
       "profile": {
         "birth": "1998-03-22T00:00:00.000Z",
         "gender": "male",
-        "language": "en",
+        "language": ["en"],
         "website": null,
         "region": "UK",
-        "background": "Interested in psychology studies",
-        "avatarBase": "dog",
-        "avatarAccessory": "glasses",
-        "avatarBg": "green"
+        "background": ["Psychology"],
+        "avatarBase": "base_white",
+        "avatarAccessory": "None",
+        "avatarBg": "bg_green"
       }
     }
   ],
@@ -59,7 +59,7 @@ const sampleData = {
       "criteria": [
         {
           "type": "language",
-          "value": "en",
+          "value": ["English"],
           "matchLevel": "Required"
         }
       ],
@@ -84,7 +84,7 @@ const sampleData = {
         "duration": "15 minutes",
         "image": "color-study.jpg",
         "thankYouMessage": "Thanks for joining!",
-        "avatarResearcher": "cat",
+        "avatarResearcher": "base_brown",
         "criteriaDescription": "We are looking for adults aged 18–30 who speak English and are familiar with mobile apps.",
         "sessionDetail": "The study will take around 20 minutes and can be completed online using your own device."
       }

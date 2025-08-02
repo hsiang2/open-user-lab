@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AVATAR_ACCESSORY, AVATAR_BACKGROUND, AVATAR_STYLE } from "./constants";
 
 const StudyStatusEnum = z.enum(['draft', 'ongoing', 'ended']);
 const RecruitmentStatusEnum = z.enum(['open', 'closed']);
@@ -34,3 +35,21 @@ export const signUpFormSchema = z
     message: "Passwords don't match",
     path: ['confirmPassword'],
   });
+
+  export const avatarSchema = z
+  .object({
+    avatarBase: z.enum(AVATAR_STYLE),
+    avatarBg: z.enum(AVATAR_BACKGROUND),
+    avatarAccessory: z
+      .union([
+        z.enum(
+          AVATAR_ACCESSORY
+          .filter((a) => a.key !== null)
+          .map((a) => a.key) as [string, ...string[]]
+        ),
+        z.literal(null),
+      ])
+      .optional(), 
+  }) 
+
+
