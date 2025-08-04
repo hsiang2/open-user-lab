@@ -1,12 +1,12 @@
 'use server';
 
 import { auth, signIn, signOut } from "@/auth";
-import { avatarSchema, signInFormSchema, signUpFormSchema } from "../validators";
+import { avatarSchema, signInFormSchema, signUpFormSchema, userProfileSchema } from "../validators";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { hashSync } from "bcrypt-ts-edge";
 import { prisma } from "@/db/prisma";
 import { formatError } from "../utils";
-import { Avatar } from "@/types";
+import { Avatar, Profile } from "@/types";
 import { AVATAR_BACKGROUND, AVATAR_STYLE } from "../constants";
 
 export async function signInWithCredentials(prevState: unknown, formData: FormData) {
@@ -60,10 +60,18 @@ export async function signUpUser(prevState: unknown, formData: FormData) {
         await prisma.userProfile.create({
             data: {
                 userId: createdUser.id,
+                birth: null,
+                gender: null,
                 language: [],
+                website: null,
+                region: null,
                 background: [],
-                avatarBase:  AVATAR_STYLE[0],
-                avatarBg:  AVATAR_BACKGROUND[0]
+                genderOther: null,
+                languageOther: null,
+                backgroundOther: null,
+                avatarBase: AVATAR_STYLE[0],
+                avatarBg: AVATAR_BACKGROUND[0],
+                avatarAccessory: null
             }
         })
 
@@ -94,23 +102,19 @@ export async function updateUserAvatar(data: Avatar) {
   try {
     const session = await auth();
 
-    const currentUser = await prisma.user.findFirst({
-      where: { id: session?.user?.id },
-    });
+    // const currentUser = await prisma.user.findFirst({
+    //   where: { id: session?.user?.id },
+    // });
 
-    if (!currentUser) throw new Error('User not found');
+    // if (!currentUser) throw new Error('User not found');
+    const currentUserId = session?.user?.id;
+    if (!currentUserId) throw new Error('Unauthenticated');
 
     const avatar = avatarSchema.parse(data);
 
-    await prisma.userProfile.upsert({
-        where: { userId: currentUser.id }, 
-        update: {
-          avatarBase: avatar.avatarBase,
-          avatarAccessory: avatar.avatarAccessory,
-          avatarBg: avatar.avatarBg,
-        },
-        create: {
-          userId: currentUser.id,
+    await prisma.userProfile.update({
+        where: { userId: currentUserId }, 
+        data: {
           avatarBase: avatar.avatarBase,
           avatarAccessory: avatar.avatarAccessory,
           avatarBg: avatar.avatarBg,
@@ -125,3 +129,59 @@ export async function updateUserAvatar(data: Avatar) {
     return { success: false, message: formatError(error) };
   }
 }
+
+export async function updateUserProfile(profileData: Profile) {
+    try {
+      const session = await auth();
+
+      const currentUserId = session?.user?.id;
+    if (!currentUserId) throw new Error('Unauthenticated');
+  
+    //   const currentUser = await prisma.user.findFirst({
+    //     where: { id: session?.user?.id },
+    //   });
+  
+    //   if (!currentUser) throw new Error('User not found');
+  
+    //   const rawBirth = formData.get('birth');
+
+    //   const profileData = userProfileSchema.parse({
+    //     birth: rawBirth ? new Date(rawBirth.toString()) : undefined,
+    //     gender: formData.get('gender') || undefined,
+    //     language: formData.getAll('language')
+    //         .map((l) => l.toString().trim())
+    //         .filter(Boolean),
+    //     website: formData.get('website')?.toString().trim() || undefined,
+    //     region: formData.get('region') || undefined,
+    //     background: formData.getAll('background')
+    //         .map((b) => b.toString().trim())
+    //         .filter(Boolean),
+    //     genderOther: formData.get('genderOther')?.toString().trim() || undefined,
+    //     languageOther: formData.get('languageOther')?.toString().trim() || undefined,
+    //     backgroundOther: formData.get('backgroundOther')?.toString().trim() || undefined,
+    // });
+  
+      await prisma.userProfile.update({
+            where: { userId: currentUserId }, 
+            data: {
+                ...profileData
+                // birth:  profileData.birth,
+                // gender: profileData.gender,
+                // language: profileData.language,
+                // website: profileData.website,
+                // region: profileData.region,
+                // background: profileData.background,
+                // genderOther: profileData.genderOther,
+                // languageOther: profileData.languageOther,
+                // backgroundOther: profileData.backgroundOther,
+            },
+        });
+  
+      return {
+        success: true,
+        message: 'User updated successfully',
+      };
+    } catch (error) {
+      return { success: false, message: formatError(error) };
+    }
+  }

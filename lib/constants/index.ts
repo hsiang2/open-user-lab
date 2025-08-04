@@ -10,8 +10,8 @@ export const signInDefaultValues = {
 }
 
 export const signUpDefaultValues = {
-    name: 'Hsiang',
-    email: 'hsiang@example.com',
+    name: 'Test',
+    email: 'test@example.com',
     password: '123456',
     confirmPassword: '123456',
     isResearcher: "true",
@@ -53,7 +53,7 @@ export const BACKGROUND_CATEGORIES = [
     "Female",
     "Male",
     "Non-binary",
-    "Self-describe",
+    "Other",
     "Prefer not to say",
   ] as const;
 
@@ -76,7 +76,8 @@ export const BACKGROUND_CATEGORIES = [
     "Vietnamese",
     "Thai",
     "Indonesian",
-    "Other"
+    "Other",
+    "Prefer not to say",
   ] as const;
 
   export const AVATAR_ACCESSORY = [

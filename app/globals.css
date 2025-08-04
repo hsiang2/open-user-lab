@@ -156,6 +156,10 @@
   .text-caption {
     @apply text-xs; 
   }
+
+  .form-item {
+    @apply w-full sm:w-[18rem] lg:w-[25rem]
+  }
   /* .h1-bold {
     @apply font-bold text-3xl lg:text-4xl;
   }

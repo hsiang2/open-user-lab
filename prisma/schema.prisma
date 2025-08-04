@@ -75,10 +75,13 @@ model UserProfile {
   userId     String   @unique
   birth      DateTime?
   gender     String?
+  genderOther     String?
   language   String[]
+  languageOther   String?
   website    String?
   region     String?
   background String[]
+  backgroundOther String?
   avatarBase       String?
   avatarAccessory  String?
   avatarBg         String?
