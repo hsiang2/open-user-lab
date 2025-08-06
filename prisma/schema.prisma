@@ -309,8 +309,12 @@ model ThankYouCertificate {
   participationId  String   @unique
   participation    Participation @relation(fields: [participationId], references: [id])
   
-  image String?
-  message            String?
+  studyName         String
+  participantName  String
+  researcherName   String
+  
+  image             String?
+  message           String?
   avatarParticipant String?
   avatarResearcher String?
   createdAt        DateTime @default(now())

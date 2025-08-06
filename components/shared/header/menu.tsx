@@ -63,11 +63,15 @@ const Menu = async () => {
                         Explore
                     </Link>
                 </Button>
-                <Button asChild variant='ghost'>
-                    <Link href='/my-studies'>
-                        My Studies
-                    </Link>
-                </Button>
+                    {
+                        session.user?.isResearcher && (
+                            <Button asChild variant='ghost'>
+                                <Link href='/my-studies'>
+                                    My Studies
+                                </Link>
+                            </Button>
+                        )
+                    }
                 <Button asChild variant='ghost'>
                     <Link href='/my-participation'>
                         My Participation
@@ -146,11 +150,15 @@ const Menu = async () => {
                                 Explore
                             </Link>
                         </Button>
-                        <Button asChild variant='ghost'>
-                            <Link href='/my-studies'>
-                                My Studies
-                            </Link>
-                        </Button>
+                        {
+                            session.user?.isResearcher && (
+                                <Button asChild variant='ghost'>
+                                    <Link href='/my-studies'>
+                                        My Studies
+                                    </Link>
+                                </Button>
+                            )
+                        }
                         <Button asChild variant='ghost'>
                             <Link href='/my-participation'>
                                 My Participation

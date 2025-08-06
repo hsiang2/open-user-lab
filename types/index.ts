@@ -20,3 +20,15 @@ export type Study = z.infer<typeof insertStudySchema> & {
 export type AvatarInfo = z.infer<typeof avatarSchema>;
 
 export type Profile = z.infer<typeof userProfileSchema>;
+
+export type Certificate = {
+  id: string;
+  studyName: string;
+  participantName: string;
+  researcherName: string;
+  image: string | null;
+  message: string | null;
+  avatarParticipant: string | null;
+  avatarResearcher: string | null;
+  createdAt: Date;
+};

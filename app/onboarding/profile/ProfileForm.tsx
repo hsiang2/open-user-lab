@@ -114,7 +114,6 @@ const ProfileForm = ({mode, profile, id}: {mode:'onboarding' | 'edit'; profile?:
         setShowOtherLanguage(profile.language?.includes("Other") ?? false);
         setShowOtherBackground(profile.background?.includes("Other") ?? false);
     }
-    console.log(profile);
     }, [mode, profile]);
 
 

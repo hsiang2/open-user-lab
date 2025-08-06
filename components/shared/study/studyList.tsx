@@ -3,7 +3,7 @@ import StudyCardResearcher from "./StudyCardResearcher";
 import StudyCardExplore from "./studyCardExplore";
 
 
-const StudyList = ({data, type,  limit}: {data: Study[]; type: string; limit?: number}) => {
+const StudyList = ({data, type, limit}: {data: Study[]; type: "researcher"|'participant' | 'explore'; limit?: number}) => {
     const limitedData = limit ? data.slice(0, limit) : data;
     return ( 
         <div className="my-10">
@@ -12,14 +12,14 @@ const StudyList = ({data, type,  limit}: {data: Study[]; type: string; limit?: n
                     {limitedData.map((study: Study) => (
                         type === "researcher" ? 
                         <StudyCardResearcher key={study.id} study={study} />: 
-                        type === "partipant" ? 
+                        type === "participant" ? 
                         <></> : 
                         <StudyCardExplore key={study.id} study={study} />
                         
                     ))}
                 </div>
             ) : (
-                <div>
+                <div className="flex flex-center">
                     <p>No studies found</p>
                 </div>
 

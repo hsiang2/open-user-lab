@@ -13,6 +13,26 @@ export async function getLatestStudies() {
     return data
 }
 
+export async function getMyStudies(userId: string) {
+  return await prisma.study.findMany({
+    where: {
+      collaborators: {
+        some: {
+          userId: userId,
+        },
+      },
+    },
+    // include: {
+    //   collaborators: true,
+    //   recruitment: true,
+    //   participations: true,
+    // },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+}
+
 //Get study by slug 
 export async function getStudyForResearcher(slug: string) {
     return await prisma.study.findFirst({
@@ -70,3 +90,12 @@ export async function generateUniqueSlug(name: string): Promise<string> {
     return next === 0 ? baseSlug : `${baseSlug}-${next}`;
   }
   
+export async function getThankYouCertificates(userId: string) {
+  return await prisma.thankYouCertificate.findMany({
+    where: {
+    participation: {
+      userId,
+    },
+    },
+  });
+}

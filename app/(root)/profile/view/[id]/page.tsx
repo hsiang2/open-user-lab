@@ -1,11 +1,15 @@
 import { auth } from "@/auth";
 import Avatar from "@/components/shared/avatar/Avatar";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getUserById, getUserProfileByUserId } from "@/lib/actions/user.action";
 import { AvatarInfo } from "@/types";
+import { TabsContent } from "@radix-ui/react-tabs";
 import { differenceInYears } from "date-fns";
 import { Landmark, Mail } from "lucide-react";
 import Link from "next/link";
+import Wall from "./Wall";
+import { getThankYouCertificates } from "@/lib/actions/study.actions";
 
 const ProfilePage = async (props: {
     params: Promise<{
@@ -17,6 +21,7 @@ const ProfilePage = async (props: {
     const isCurrentUser = session?.user?.id === id;
     const user = await getUserById(id);
     const profile = await getUserProfileByUserId(id);
+    const certificates = await getThankYouCertificates(id);
     const avatarInfo = {
         avatarBase: profile?.avatarBase,
         avatarBg: profile?.avatarBg,
@@ -155,8 +160,24 @@ const ProfilePage = async (props: {
                 </div>
                 
             </div>
-            <div>
-
+            <div className="flex flex-col items-center mt-18 ">
+                <Tabs defaultValue="participation" className="flex flex-col items-center w-full">
+                    {/* w-[400px] */}
+                <TabsList>
+                    <TabsTrigger value="participation">Participation</TabsTrigger>
+                    {
+                        user.isResearcher && (
+                            <TabsTrigger value="studies">Studies</TabsTrigger>
+                        )
+                    }
+                </TabsList>
+                <TabsContent value="participation" className="w-full p-4">
+                    <Wall certificates={certificates} />
+                </TabsContent>
+                <TabsContent value="studies">
+                    
+                </TabsContent>
+                </Tabs>
             </div>
         </div>
     );
