@@ -17,6 +17,6 @@ export type Study = z.infer<typeof insertStudySchema> & {
     // StudySaved: StudySaved[];
 };
 
-export type Avatar = z.infer<typeof avatarSchema>;
+export type AvatarInfo = z.infer<typeof avatarSchema>;
 
 export type Profile = z.infer<typeof userProfileSchema>;

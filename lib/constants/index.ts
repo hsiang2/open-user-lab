@@ -107,6 +107,13 @@ export const BACKGROUND_CATEGORIES = [
         role: "researcher",
       },
   ] as const;
+
+  export const AVATAR_ACCESSORY_KEYS = [
+    "accessory_participant_eeg",
+    "accessory_participant_vr",
+    "accessory_researcher_office",
+    "accessory_researcher_lab",
+  ] as const;
   
   export const AVATAR_STYLE = [
     "style_white",

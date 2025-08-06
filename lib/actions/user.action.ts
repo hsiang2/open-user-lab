@@ -6,7 +6,7 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { hashSync } from "bcrypt-ts-edge";
 import { prisma } from "@/db/prisma";
 import { formatError } from "../utils";
-import { Avatar, Profile } from "@/types";
+import { AvatarInfo, Profile } from "@/types";
 import { AVATAR_BACKGROUND, AVATAR_STYLE } from "../constants";
 
 export async function signInWithCredentials(prevState: unknown, formData: FormData) {
@@ -98,7 +98,7 @@ export async function getUserById(userId: string) {
     return user;
   }
 
-export async function updateUserAvatar(data: Avatar) {
+export async function updateUserAvatar(data: AvatarInfo) {
   try {
     const session = await auth();
 
@@ -185,3 +185,23 @@ export async function updateUserProfile(profileData: Profile) {
       return { success: false, message: formatError(error) };
     }
   }
+
+
+export async function getUserAvatar(userId: string) {
+  return await prisma.userProfile.findUnique({
+    where: { userId },
+    select: {
+      avatarBase: true,
+      avatarBg: true,
+      avatarAccessory: true,
+    },
+  });
+}
+
+export async function getUserProfileByUserId(userId: string) {
+  return await prisma.userProfile.findUnique({
+    where: { userId },
+  });
+}
+
+

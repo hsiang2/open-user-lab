@@ -3,7 +3,6 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { userProfileSchema } from "@/lib/validators";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from 'zod';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CalendarIcon, Loader } from "lucide-react";
@@ -16,8 +15,9 @@ import { BACKGROUND_CATEGORIES, GENDERS, LANGUAGES, REGIONS } from "@/lib/consta
 import { updateUserProfile } from "@/lib/actions/user.action";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MultipleSelector, { Option } from "@/components/ui/multipleSelector";
+import { Profile } from "@/types";
 
 export const languageOptions: Option[] = LANGUAGES.map((item) => ({
     label: item,
@@ -29,7 +29,7 @@ export const backgroundOptions: Option[] = BACKGROUND_CATEGORIES.map((item) => (
     value: item,
 }));
 
-const ProfileForm = () => {
+const ProfileForm = ({mode, profile, id}: {mode:'onboarding' | 'edit'; profile?: Profile; id?: string}) => {
     const router = useRouter();
     const [showOtherGender, setShowOtherGender] = useState(false);
     const [showOtherLanguage, setShowOtherLanguage] = useState(false);
@@ -52,8 +52,8 @@ const ProfileForm = () => {
     })
     
     // 2. Define a submit handler.
-    const onSubmit = async (values: z.infer<typeof userProfileSchema>) => {
-        // console.log(values);
+    const onSubmit = async (values: Profile) => {
+        
         const trimmedGenderOther = values.genderOther?.trim();
         const trimmedLanguageOther = values.languageOther?.trim();
         const trimmedBackgroundOther = values.backgroundOther?.trim();
@@ -65,17 +65,17 @@ const ProfileForm = () => {
         genderOther:
             values.gender === "Other" && trimmedGenderOther
             ? trimmedGenderOther
-            : undefined,
+            : null,
 
         languageOther:
             values.language?.includes("Other") && trimmedLanguageOther
             ? trimmedLanguageOther
-            : undefined,
+            : null,
 
         backgroundOther:
             values.background?.includes("Other") && trimmedBackgroundOther
             ? trimmedBackgroundOther
-            : undefined,
+            : null,
 
         website:
             trimmedWebsite === "" ? undefined : trimmedWebsite,
@@ -88,12 +88,39 @@ const ProfileForm = () => {
             return;
         }
 
-        router.push('/');
+        if (mode === 'onboarding') {
+                router.push('/');
+        } else {
+            router.push(`/profile/view/${id}`);
+        }
+        
     }
+
+    useEffect(() => {
+    if (mode === 'edit' && profile) {
+        form.reset({
+        birth: profile.birth ?? undefined,
+        gender: profile.gender ?? undefined,
+        genderOther: profile.genderOther ?? '',
+        language: profile.language ?? [],
+        languageOther: profile.languageOther ?? '',
+        website: profile.website ?? '',
+        region: profile.region ?? undefined,
+        background: profile.background ?? [],
+        backgroundOther: profile.backgroundOther ?? '',
+        });
+
+         setShowOtherGender(profile.gender === "Other");
+        setShowOtherLanguage(profile.language?.includes("Other") ?? false);
+        setShowOtherBackground(profile.background?.includes("Other") ?? false);
+    }
+    console.log(profile);
+    }, [mode, profile]);
+
 
     return (  
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex-col flex-center w-max-[1000px]">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex-col flex-center max-w-[1000px]">
                 <div className="flex flex-col sm:flex-row sm:flex-center mb-20 space-x-25">
                     <div className="space-y-8 mb-8 sm:mb-0 w-full">
                         <FormField
@@ -148,11 +175,21 @@ const ProfileForm = () => {
                                 <FormLabel>Gender</FormLabel>
                                 <Select 
                                     // onValueChange={field.onChange} defaultValue={field.value}
+                                    // value={field.value ?? ""}
+                                    // onValueChange={(value) => {
+                                    //     field.onChange(value);
+                                    //     setShowOtherGender(value === "Other");
+                                    // }}
+                                   defaultValue={profile?.gender as typeof GENDERS[number]}
                                     onValueChange={(value) => {
-                                        field.onChange(value);
+                                        form.setValue("gender", value as typeof GENDERS[number]);
                                         setShowOtherGender(value === "Other");
+
+                                        // if (value !== "Other") {
+                                        //     form.setValue("genderOther", ""); 
+                                        // }
                                     }}
-                                    value={field.value}
+                                    
                                 >
                                     <FormControl className="w-full">
                                     <SelectTrigger>
@@ -180,7 +217,7 @@ const ProfileForm = () => {
                                     <FormItem className="mt-2 form-item">
                                         <FormLabel>Please describe your gender</FormLabel>
                                         <FormControl className="w-full">
-                                            <Input placeholder="Your gender" {...field} />
+                                            <Input placeholder="Your gender" {...field} value={field.value ?? ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -244,6 +281,9 @@ const ProfileForm = () => {
 
                                             field.onChange(values);
                                             setShowOtherLanguage(values.includes("Other"));
+                                            // if (!values.includes("Other")) {
+                                            //     form.setValue("languageOther", "");
+                                            // }
                                         }}
                                         // {...field}
                                         defaultOptions={languageOptions}
@@ -267,7 +307,7 @@ const ProfileForm = () => {
                                     <FormItem className="form-item">
                                         <FormLabel>Other language (please specify)</FormLabel>
                                         <FormControl className="w-full">
-                                            <Input placeholder="Enter language" {...field} />
+                                            <Input placeholder="Enter language" {...field} value={field.value ?? ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -302,6 +342,9 @@ const ProfileForm = () => {
 
                                             field.onChange(values);
                                             setShowOtherBackground(values.includes("Other"));
+                                            // if (!values.includes("Other")) {
+                                            //     form.setValue("backgroundOther", "");
+                                            // }
                                         }}
                                         // {...field}
                                         defaultOptions={backgroundOptions}
@@ -325,7 +368,7 @@ const ProfileForm = () => {
                                     <FormItem className="form-item">
                                         <FormLabel>Other background (please specify)</FormLabel>
                                         <FormControl className="w-full">
-                                            <Input placeholder="Enter field" {...field} />
+                                            <Input placeholder="Enter field" {...field} value={field.value ?? ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -357,12 +400,26 @@ const ProfileForm = () => {
                     type="submit"
                     disabled={form.formState.isSubmitting}
                 >
-                    {form.formState.isSubmitting ? (
-                    <Loader className='w-4 h-4 animate-spin' />
+                     { mode === 'onboarding' ? (
+                        <>
+                            {form.formState.isSubmitting ? (
+                                <Loader className='w-4 h-4 animate-spin' />
+                                ) : (
+                                <ArrowRight className='w-4 h-4' />
+                                )}{' '}
+                            Save and Continue
+                        </>
                     ) : (
-                    <ArrowRight className='w-4 h-4' />
-                    )}{' '}
-                    Save and Continue
+                        <>
+                            {form.formState.isSubmitting && (
+                                <>
+                                    <Loader className='w-4 h-4 animate-spin' />{' '}
+                                </>
+                            )}
+                            Save
+                        </>
+                    )}
+                    
                 </Button>
             </form>
         </Form>

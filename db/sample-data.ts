@@ -16,7 +16,7 @@ const sampleData = {
         "website": "https://alice-lab.example.com",
         "region": "UK",
         "background": ["Psychology", "Design"],
-        "avatarBase": "base_brown",
+        "avatarBase": "style_brown",
         "avatarAccessory": "accessory_researcher_office",
         "avatarBg": "bg_blue"
       }
@@ -31,11 +31,11 @@ const sampleData = {
       "profile": {
         "birth": "1998-03-22T00:00:00.000Z",
         "gender": "male",
-        "language": ["en"],
+        "language": ["English"],
         "website": null,
         "region": "UK",
         "background": ["Psychology"],
-        "avatarBase": "base_white",
+        "avatarBase": "style_white",
         "avatarAccessory": "None",
         "avatarBg": "bg_green"
       }

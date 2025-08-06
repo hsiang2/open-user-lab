@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AVATAR_ACCESSORY, AVATAR_BACKGROUND, AVATAR_STYLE, BACKGROUND_CATEGORIES, GENDERS, LANGUAGES, REGIONS } from "./constants";
+import { AVATAR_ACCESSORY, AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE, BACKGROUND_CATEGORIES, GENDERS, LANGUAGES, REGIONS } from "./constants";
 
 const StudyStatusEnum = z.enum(['draft', 'ongoing', 'ended']);
 const RecruitmentStatusEnum = z.enum(['open', 'closed']);
@@ -40,11 +40,7 @@ export const signUpFormSchema = z
   .object({
     avatarBase: z.enum(AVATAR_STYLE),
     avatarBg: z.enum(AVATAR_BACKGROUND),
-    avatarAccessory: z.enum(
-          AVATAR_ACCESSORY
-          .filter((a) => a.key !== null)
-          .map((a) => a.key) as [string, ...string[]]
-        ).nullable().optional(), 
+    avatarAccessory: z.enum(AVATAR_ACCESSORY_KEYS).nullable().optional(),
   }) 
 
   export const userProfileSchema = z
@@ -55,9 +51,9 @@ export const signUpFormSchema = z
     website: z.string().max(1000, 'website must be 1000 characters or fewer').optional(),
     region: z.enum(REGIONS).optional(),
     background: z.array(z.enum(BACKGROUND_CATEGORIES)).optional(),
-    genderOther: z.string().max(1000, 'gender must be 1000 characters or fewer').optional(),
-    languageOther: z.string().max(1000, 'language must be 1000 characters or fewer').optional(),
-    backgroundOther: z.string().max(1000, 'background must be 1000 characters or fewer').optional(),
+    genderOther: z.string().max(1000, 'gender must be 1000 characters or fewer').nullable().optional(),
+    languageOther: z.string().max(1000, 'language must be 1000 characters or fewer').nullable().optional(),
+    backgroundOther: z.string().max(1000, 'background must be 1000 characters or fewer').nullable().optional(),
   }) 
   .refine((data) => {
     if (data.gender === "Other") return !!data.genderOther?.trim();

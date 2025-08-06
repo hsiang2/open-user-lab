@@ -1,7 +1,6 @@
 import { Metadata } from "next";
 import AvatarForm from "./AvatarForm";
 import { auth } from "@/auth";
-import { getUserById } from "@/lib/actions/user.action";
 
 export const metadata: Metadata = {
     title: 'Avatar',
@@ -10,14 +9,16 @@ export const metadata: Metadata = {
 const OnboardingAvatarPage = async () => {
 
     const session = await auth();
-    const userId = session?.user?.id;
   
-    if (!userId) throw new Error('User not found');
+    if (!session?.user?.id) throw new Error('User not found');
   
-    const user = await getUserById(userId);
-
     return ( 
-        <AvatarForm isResearcher={user.isResearcher} />
+        <div className="flex-col flex-center">
+            <h1 className="text-title mb-20">Choose your avatar</h1>
+            {/* <p className="text-body mb-20 text-center max-w-[20rem] sm:max-w-[40rem]">These details help researchers match you to suitable studies. All fields are optional and can be edited later.</p> */}
+            <AvatarForm isResearcher={session.user.isResearcher} mode="onboarding" />
+        </div>
+       
     );
 }
  

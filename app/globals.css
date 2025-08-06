@@ -142,7 +142,7 @@
   }
 
   .text-title {
-    @apply font-bold text-3xl lg:text-4xl text-center;
+    @apply font-bold text-3xl lg:text-4xl;
   }
 
   .text-subtitle {

@@ -1,15 +1,18 @@
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { MenuIcon } from "lucide-react";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { signOutUser } from "@/lib/actions/user.action";
+import { getUserAvatar, signOutUser } from "@/lib/actions/user.action";
+import Avatar from "../avatar/Avatar";
+import { AvatarInfo } from "@/types";
+import { avatarSchema } from "@/lib/validators";
 
 const Menu = async () => {
     const session = await auth();
 
-    if (!session) {
+    if (!session?.user?.id) {
         return (
             <div>
                 <nav className="hidden md:flex">
@@ -47,10 +50,14 @@ const Menu = async () => {
         );
     }
 
+    const avatar = await getUserAvatar(session.user.id) as AvatarInfo;
+    // const rawAvatar = await getUserAvatar(session.user.id);
+    // const avatar = avatarSchema.parse(rawAvatar);
+
 
     return ( 
         <div>
-            <nav className="hidden md:flex">
+            <nav className="hidden md:flex md:items-center">
                 <Button asChild variant='ghost'>
                     <Link href='/explore'>
                         Explore
@@ -76,16 +83,19 @@ const Menu = async () => {
                         Notifications
                     </Link>
                 </Button>
-                <div className='flex gap-2 items-center'>
+                <div 
+                    // className='flex gap-2 items-center'
+                >
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           
                             <div 
-                            className='flex items-center'
+                            className='flex items-center ml-4'
                             >
-                                <Button variant='ghost'>
+                                <Avatar width={50} background={avatar?.avatarBg} style={avatar?.avatarBase} accessory={avatar?.avatarAccessory}  />
+                                {/* <Button variant='ghost'>
                                     { session.user?.name}
-                                </Button>
+                                </Button> */}
                             {/* <Button
                                 variant='ghost'
                                 className='relativee w-8 h-8 rounded-full ml-2 flex items-center justify-center bg-gray-200'
@@ -106,7 +116,7 @@ const Menu = async () => {
                             </div>
                             </DropdownMenuLabel>
                             <DropdownMenuItem>
-                            <Link href='/profile' className='w-full'>
+                            <Link href={`/profile/view/${session.user.id}`} className='w-full'>
                                 User Profile
                             </Link>
                             </DropdownMenuItem>
@@ -129,7 +139,8 @@ const Menu = async () => {
                     <SheetTrigger className="align-middle">
                         <MenuIcon />
                     </SheetTrigger>
-                    <SheetContent className="flex flex-col items-start pt-2">
+                    <SheetContent className="flex flex-col items-start">
+                        <SheetTitle className="p-4">Menu</SheetTitle>
                         <Button asChild variant='ghost'>
                             <Link href='/exploe'>
                                 Explore
@@ -159,19 +170,20 @@ const Menu = async () => {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                 
-                                    <div 
-                                    className='flex items-center'
-                                    >
-                                        <Button variant='ghost'>
-                                            { session.user?.name}
-                                        </Button>
-                                    {/* <Button
-                                        variant='ghost'
-                                        className='relativee w-8 h-8 rounded-full ml-2 flex items-center justify-center bg-gray-200'
-                                    >
-                                        {firstInitial}
-                                    </Button> */}
-                                    </div>
+                                <div 
+                                className='flex items-center ml-4'
+                                >
+                                    <Avatar width={50} background={avatar?.avatarBg} style={avatar?.avatarBase} accessory={avatar?.avatarAccessory}  />
+                                    <Button variant='ghost'>
+                                        { session.user?.name}
+                                    </Button>
+                                {/* <Button
+                                    variant='ghost'
+                                    className='relativee w-8 h-8 rounded-full ml-2 flex items-center justify-center bg-gray-200'
+                                >
+                                    {firstInitial}
+                                </Button> */}
+                                </div>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className='w-56' align='end' forceMount>
                                     <DropdownMenuLabel className='font-normal'>
@@ -185,7 +197,7 @@ const Menu = async () => {
                                     </div>
                                     </DropdownMenuLabel>
                                     <DropdownMenuItem>
-                                    <Link href='/profile' className='w-full'>
+                                    <Link href={`/profile/view/${session.user.id}`} className='w-full'>
                                         User Profile
                                     </Link>
                                     </DropdownMenuItem>
