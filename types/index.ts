@@ -1,4 +1,4 @@
-import { avatarSchema, insertStudySchema, userProfileSchema } from '@/lib/validators'
+import { avatarSchema, createStudyFullSchema, criteriaUiSchema, insertCriteria, insertParticipantWorkflowStep, insertRecruitmentSchema, insertStudySchema, insertStudyWorkflowStep, userProfileSchema } from '@/lib/validators'
 import { z } from 'zod'
 
 export type Study = z.infer<typeof insertStudySchema> & {
@@ -17,6 +17,55 @@ export type Study = z.infer<typeof insertStudySchema> & {
     // StudySaved: StudySaved[];
 };
 
+export type Recruitment = z.infer<typeof insertRecruitmentSchema> & {
+    id: string
+  studyId: string
+      // status: StudyStatusEnum,
+    // recruitmentStatus: RecruitmentStatusEnum
+//   id        String   @id @default(cuid())
+//   studyId   String @unique
+//   study     Study    @relation(fields: [studyId], references: [id])
+
+//   image      String?
+//   avatarResearcher      String?
+//   thankYouMessage String?
+};
+
+export type Criteria = z.infer<typeof insertCriteria> & {
+  //   id: string
+  // studyId: string
+};
+
+export type MatchLevel = "No Preference" | "Optional" | "Required";
+
+// export type CriteriaUiValues = {
+//   gender: { matchLevel: MatchLevel; values: string[] };
+//   background: { matchLevel: MatchLevel; values: string[] };
+//   region: { matchLevel: MatchLevel; values: string[] };
+//   language: { matchLevel: MatchLevel; values: string[] };
+//   age: { matchLevel: MatchLevel; min?: number; max?: number };
+// };
+export type CriteriaUiValues = z.infer<typeof criteriaUiSchema>;
+
+export type ParticipantWorkflowStep = z.infer<typeof insertParticipantWorkflowStep> & {
+    id: string
+  order: number
+};
+
+export type StudyWorkflowStep = z.infer<typeof insertStudyWorkflowStep> & {
+    id: string
+  order: number
+};
+
+export type StudyFullInput = z.infer<typeof createStudyFullSchema>
+
+export type StudyCreatePayload = Omit<
+  StudyFullInput,
+  "criteria"
+> & {
+  criteria: Array<z.infer<typeof insertCriteria>>;
+};
+
 export type AvatarInfo = z.infer<typeof avatarSchema>;
 
 export type Profile = z.infer<typeof userProfileSchema>;
@@ -28,7 +77,10 @@ export type Certificate = {
   researcherName: string;
   image: string | null;
   message: string | null;
-  avatarParticipant: string | null;
-  avatarResearcher: string | null;
+  avatarBaseParticipant: string | null;
+  avatarAccessoryParticipant: string | null;
+  avatarBaseResearcher: string | null;
+  avatarAccessoryResearcher: string | null;
   createdAt: Date;
 };
+

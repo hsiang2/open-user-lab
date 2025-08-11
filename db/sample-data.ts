@@ -80,8 +80,8 @@ const sampleData = {
       "recruitment": {
         "description": "Recruiting participants interested in colour studies.",
         "reward": "\u00a310 Amazon voucher",
-        "format": "online",
-        "duration": "15 minutes",
+        "format": ["Online"],
+        "duration": 15,
         "image": "color-study.jpg",
         "thankYouMessage": "Thanks for joining!",
         "avatarResearcher": "base_brown",

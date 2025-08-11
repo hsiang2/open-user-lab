@@ -121,7 +121,6 @@ export const BACKGROUND_CATEGORIES = [
     "style_brown",
   ] as const;
   
-  
   export const AVATAR_BACKGROUND = [
     "bg_green",
     "bg_red",
@@ -129,3 +128,16 @@ export const BACKGROUND_CATEGORIES = [
     "bg_purple",
     "bg_brown",
   ] as const;
+
+    export const STUDY_IMAGE = [
+    "image_1",
+    "image_2",
+    "image_3",
+  ] as const;
+
+  export const RECRUITMENT_FORMATS = [
+  "Online",
+  "In-person",
+  "Asynchronous",
+  "Other",
+] as const;

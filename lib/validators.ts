@@ -1,16 +1,102 @@
 import { z } from "zod";
-import { AVATAR_ACCESSORY, AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE, BACKGROUND_CATEGORIES, GENDERS, LANGUAGES, REGIONS } from "./constants";
-
-const StudyStatusEnum = z.enum(['draft', 'ongoing', 'ended']);
-const RecruitmentStatusEnum = z.enum(['open', 'closed']);
+import { AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE, BACKGROUND_CATEGORIES, GENDERS, LANGUAGES, RECRUITMENT_FORMATS, REGIONS } from "./constants";
+import { CriteriaMatchLevel, ProfileField } from "@prisma/client";
 
 // Schema for inserting studies
 export const insertStudySchema = z.object({
     name: z.string().min(1, 'Name is required').max(100, 'Name must be 100 characters or fewer'),
     description: z.string().min(1, 'Description is required').max(1000, 'Description must be 1000 characters or fewer'),
-    status: StudyStatusEnum,
-    recruitmentStatus: RecruitmentStatusEnum
+    // status: StudyStatusEnum,
+    // recruitmentStatus: RecruitmentStatusEnum
 })
+
+export const insertRecruitmentSchema = z.object({
+    // description: z.string().max(1000, 'Description must be 1000 characters or fewer').optional(),
+    reward: z.string().max(1000, 'Reward must be 1000 characters or fewer').nullable().optional(),
+    format: z.array(z.enum(RECRUITMENT_FORMATS)).min(1).max(4),
+    formatOther: z.string().max(100).nullable().optional(),
+    durationMinutes: z.coerce.number().int().positive().max(24*60),
+    sessionDetail: z.string().max(1000, 'Session detail must be 1000 characters or fewer').nullable().optional(),
+    criteriaDescription: z.string().min(1, 'Criteria description is required').max(1000, 'Criteria description detail must be 1000 characters or fewer'),
+})
+
+export const insertCriteria = z.object({
+  type: z.enum(ProfileField),
+  value: z.array(z.string()),
+  matchLevel: z.enum(CriteriaMatchLevel)
+})
+
+
+export const matchLevelUi = z.enum(["No Preference", "Optional", "Required"]);
+
+const withValues = z.object({
+  matchLevel: matchLevelUi,
+  values: z.array(z.string()).default([]),
+}).superRefine((v, ctx) => {
+  if (v.matchLevel !== "No Preference" && v.values.length === 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["values"],        
+      message: "Please select at least one.",
+    });
+  }
+});
+
+export const criteriaUiSchema = z.object({
+ gender: withValues,
+  background: withValues,
+  region: withValues,
+  language: withValues,
+  age: z.object({
+    matchLevel: matchLevelUi,
+    min: z.coerce.number().int().nonnegative().optional(),
+    max: z.coerce.number().int().positive().optional(),
+  }).superRefine((v, ctx) => {
+    if (v.matchLevel === "No Preference") return;
+    if (v.min == null) {
+      ctx.addIssue({ code: "custom", path: ["min"], message: "Min is required." }); 
+    }
+    if (v.max == null) {
+      ctx.addIssue({ code: "custom", path: ["max"], message: "Max is required." }); 
+    }
+    if (v.min != null && v.max != null && v.min > v.max) {
+      ctx.addIssue({ code: "custom", path: ["max"], message: "Max must be ≥ Min." });
+    }
+  }),
+});
+
+
+export const insertParticipantWorkflowStep = z.object({
+  name:  z.string().min(1, 'Name is required').max(1000, 'Name must be 1000 characters or fewer'),
+  // order: z.number().int().positive(),  
+  noteResearcher: z.string().max(1000, 'Note must be 1000 characters or fewer').optional(),
+  noteParticipant:   z.string().max(1000, 'Note must be 1000 characters or fewer').optional(),
+  deadline: z.coerce.date().optional(),
+})
+
+export const insertStudyWorkflowStep = z.object({
+  name:  z.string().min(1, 'Name is required').max(1000, 'Name must be 1000 characters or fewer'),
+  // order: z.number().int().positive(),  
+  note: z.string().max(1000, 'Note must be 1000 characters or fewer').optional(),
+  deadline: z.coerce.date().optional(),
+})
+
+export const createStudyFullSchema = insertStudySchema
+  .and(insertRecruitmentSchema)
+  .and(
+    z.object({
+      criteria: criteriaUiSchema,
+      participantSteps: z.array(insertParticipantWorkflowStep).default([]),
+      studySteps: z.array(insertStudyWorkflowStep).default([]),
+
+
+      // thankYouMessage: z.string().max(1000).optional(),
+      // avatarBaseResearcher: z.string().optional(),
+      // avatarAccessoryResearcher: z.string().optional(),
+      // image: z.string().optional(),
+    })
+  )
+
 
 // Schema for signing users in
 export const signInFormSchema = z.object({

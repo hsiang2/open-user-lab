@@ -230,14 +230,19 @@ model Recruitment {
   studyId   String @unique
   study     Study    @relation(fields: [studyId], references: [id])
   description String?
-  reward     String?
-  format     String?
-  duration   String?
+  format             String[] 
+  formatOther        String?   
+  durationMinutes    Int?   
   sessionDetail String?
   criteriaDescription String?
+  reward  String?
   image      String?
-  avatarResearcher      String?
+  avatarAccessoryResearcher      String?
+  avatarBaseResearcher      String?
   thankYouMessage String?
+  autoCloseSelectedCount   Int?      
+  autoCloseApplicantCount  Int?      
+  autoCloseDate            DateTime?
 }
 
 model Form {
@@ -315,8 +320,10 @@ model ThankYouCertificate {
   
   image             String?
   message           String?
-  avatarParticipant String?
-  avatarResearcher String?
+  avatarBaseParticipant String?
+  avatarAccessoryParticipant String?
+  avatarBaseResearcher String?
+  avatarAccessoryResearcher String?
   createdAt        DateTime @default(now())
 }
 
@@ -385,7 +392,6 @@ enum ProfileField {
   background
   birth
 }
-
 
 
 
