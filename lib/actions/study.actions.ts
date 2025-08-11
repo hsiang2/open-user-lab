@@ -4,6 +4,7 @@ import { LATEST_STUDIES_LIMIT, STUDY_IMAGE } from "../constants";
 import { slugify } from '../utils';
 import { auth } from '@/auth';
 import { StudyCreatePayload, StudyFullInput } from '@/types';
+import { revalidatePath } from 'next/cache';
 
 // Get latest study
 export async function getLatestStudies() {
@@ -40,7 +41,25 @@ export async function getStudyForResearcher(slug: string) {
     return await prisma.study.findFirst({
         where: { slug: slug },
         include: {
-            collaborators: true,
+            collaborators: {
+              select: {
+                id: true,
+                role: true,
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    profile: {
+                      select: {
+                        avatarBase: true,
+                        avatarAccessory: true,
+                        avatarBg: true,
+                      },
+                    },
+                  },
+                }
+              }
+            },
             participations: true,
             participantSaved: true,
             participantWorkflow: { include: { steps: true } },
@@ -114,14 +133,6 @@ export async function createStudyFull(
     select: { avatarBase: true, avatarAccessory: true },
   })
 
-  // const participantStepsWithOrder = input.participantSteps.map((s, i) => ({
-  //   ...s,
-  //   order: i + 1,
-  // }))
-  // const studyStepsWithOrder = input.studySteps.map((s, i) => ({
-  //   ...s,
-  //   order: i + 1,
-  // }))
   const participantStepsWithOrder = (input.participantSteps ?? []).map((s, i) => ({
   name: s.name,
   order: i + 1,
@@ -218,41 +229,83 @@ if (studyStepsWithOrder.length > 0) {
   });
 }
 
-    // // 4) Participant Workflow（Parent and child）
-    // if (input.participantSteps?.length) {
-    //   await tx.participantWorkflow.create({
-    //     data: {
-    //       studyId: study.id,
-    //       steps: {
-    //         create: participantStepsWithOrder.map((s) => ({
-    //           name: s.name,
-    //           order: s.order,
-    //           noteResearcher: s.noteResearcher ?? null,
-    //           noteParticipant: s.noteParticipant ?? null,
-    //           deadline: s.deadline ?? null,
-    //         })),
-    //       },
-    //     },
-    //   })
-    // }
-
-    // // 5) Study Workflow（Parent and child）
-    // if (input.studySteps?.length) {
-    //   await tx.studyWorkflow.create({
-    //     data: {
-    //       studyId: study.id,
-    //       steps: {
-    //         create: studyStepsWithOrder.map((s) => ({
-    //           name: s.name,
-    //           order: s.order,
-    //           note: s.note ?? null,
-    //           deadline: s.deadline ?? null,
-    //         })),
-    //       },
-    //     },
-    //   })
-    // }
-
     return study // { id, slug }
   })
+}
+
+
+function pathFor(slug: string) {
+  return `/my-studies/view/${slug}/overview`;
+}
+
+export async function goLive(slug: string) {
+  const study = await prisma.study.findUnique({ where: { slug }, select: { status: true } });
+  if (!study) throw new Error("Study not found");
+  if (study.status !== "draft") throw new Error("Only draft studies can go live");
+
+  await prisma.study.update({
+    where: { slug },
+    data: { status: "ongoing", recruitmentStatus: "open" },
+  });
+
+  revalidatePath(pathFor(slug));
+}
+
+export async function endStudy(slug: string) {
+  const study = await prisma.study.findUnique({
+    where: { slug },
+    select: { status: true },
+  });
+  if (!study) throw new Error("Study not found");
+  if (study.status !== "ongoing") throw new Error("Only ongoing studies can be ended");
+
+  await prisma.study.update({
+    where: { slug },
+    data: { status: "ended", recruitmentStatus: "closed" },
+  });
+
+  revalidatePath(pathFor(slug));
+}
+
+export async function pauseRecruitment(slug: string) {
+  const study = await prisma.study.findUnique({
+    where: { slug },
+    select: { status: true, recruitmentStatus: true },
+  });
+  if (!study) throw new Error("Study not found");
+  if (study.status !== "ongoing") throw new Error("Study must be ongoing to pause recruitment");
+  if (study.recruitmentStatus !== "open") throw new Error("Recruitment is not open");
+
+  await prisma.study.update({
+    where: { slug },
+    data: { recruitmentStatus: "closed" },
+  });
+
+  revalidatePath(pathFor(slug));
+}
+
+export async function resumeRecruitment(slug: string) {
+  const study = await prisma.study.findUnique({
+    where: { slug },
+    select: { status: true, recruitmentStatus: true },
+  });
+  if (!study) throw new Error("Study not found");
+  if (study.status !== "ongoing") throw new Error("Study must be ongoing to resume recruitment");
+  if (study.recruitmentStatus !== "closed") throw new Error("Recruitment is not closed");
+
+  await prisma.study.update({
+    where: { slug },
+    data: { recruitmentStatus: "open" },
+  });
+
+  revalidatePath(pathFor(slug));
+}
+
+export async function deleteStudy(slug: string) {
+  const study = await prisma.study.findUnique({ where: { slug }, select: { id: true } });
+  if (!study) throw new Error("Study not found");
+
+  await prisma.study.delete({ where: { slug } });
+
+  revalidatePath("/my-studies");
 }

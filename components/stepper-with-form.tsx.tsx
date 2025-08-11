@@ -893,7 +893,7 @@ const FormStepperComponent = () => {
       const { slug } = await createStudyFull(payload);
       // 成功：導頁或重置
       // methods.reset(); // 如果你想回到第一步
-      router.push(`/my-studies/view/${slug}`);
+      router.push(`/my-studies/view/${slug}/overview`);
     } catch (e) {
       console.error(e);
       toast.error(e as string);

@@ -110,7 +110,7 @@ model Study {
 
 model Collaborator {
   id        String  @id @default(cuid())
-  study     Study   @relation(fields: [studyId], references: [id])
+  study     Study   @relation(fields: [studyId], references: [id], onDelete: Cascade)
   studyId   String
   user      User    @relation(fields: [userId], references: [id])
   userId    String
@@ -129,7 +129,7 @@ model Participation {
   appliedAt          DateTime?
   invitedAt          DateTime?
   user               User     @relation(fields: [userId], references: [id])
-  study              Study    @relation(fields: [studyId], references: [id])
+  study              Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
   formResponses      FormResponse[]
   workflowStepStatuses ParticipantWorkflowStepStatus[]
   thankYouCertificate ThankYouCertificate?
@@ -142,8 +142,8 @@ model ParticipantWorkflowStepStatus {
   status        StepStatus
   completedAt   DateTime?
 
-  step          ParticipantWorkflowStep @relation(fields: [stepId], references: [id])
-  participation Participation           @relation(fields: [participationId], references: [id])
+  step          ParticipantWorkflowStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  participation Participation           @relation(fields: [participationId], references: [id], onDelete: Cascade)
 }
 
 model ParticipantWorkflowStep {
@@ -155,21 +155,21 @@ model ParticipantWorkflowStep {
   noteParticipant String?
   deadline        DateTime?
 
-  workflow        ParticipantWorkflow             @relation(fields: [workflowId], references: [id])
+  workflow        ParticipantWorkflow             @relation(fields: [workflowId], references: [id], onDelete: Cascade)
   statuses        ParticipantWorkflowStepStatus[]
 }
 
 model ParticipantWorkflow {
   id        String   @id @default(cuid())
   studyId   String  @unique
-  study     Study    @relation(fields: [studyId], references: [id])
+  study     Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
   steps     ParticipantWorkflowStep[]
 }
 
 model StudyWorkflow {
   id        String             @id @default(cuid())
   studyId   String             @unique
-  study     Study              @relation(fields: [studyId], references: [id])
+  study     Study              @relation(fields: [studyId], references: [id], onDelete: Cascade)
   steps     StudyWorkflowStep[]
   
 }
@@ -181,7 +181,7 @@ model StudyWorkflowStep {
   order           Int
   note            String?
   deadline        DateTime?
-  workflow        StudyWorkflow         @relation(fields: [workflowId], references: [id])
+  workflow        StudyWorkflow         @relation(fields: [workflowId], references: [id], onDelete: Cascade)
   statuses        StudyWorkflowStepStatus[]
 }
 
@@ -192,7 +192,7 @@ model StudyWorkflowStepStatus {
   status    StepStatus
   completedAt DateTime?
 
-  step      StudyWorkflowStep @relation(fields: [stepId], references: [id])
+  step      StudyWorkflowStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
 }
 
 
@@ -202,7 +202,7 @@ model ParticipantSaved {
   studyId       String
 
   participant   User     @relation(fields: [participantId], references: [id])
-  study         Study    @relation(fields: [studyId], references: [id])
+  study         Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
 }
 
 model StudySaved {
@@ -212,7 +212,7 @@ model StudySaved {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
-  study     Study    @relation(fields: [studyId], references: [id])
+  study     Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
 }
 
 
@@ -222,13 +222,13 @@ model Criteria {
   type        ProfileField
   value       String[]
   matchLevel  CriteriaMatchLevel
-  study       Study        @relation(fields: [studyId], references: [id])
+  study       Study        @relation(fields: [studyId], references: [id], onDelete: Cascade)
 }
 
 model Recruitment {
   id        String   @id @default(cuid())
   studyId   String @unique
-  study     Study    @relation(fields: [studyId], references: [id])
+  study     Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
   description String?
   format             String[] 
   formatOther        String?   
@@ -249,7 +249,7 @@ model Form {
   id          String   @id @default(cuid())
   studyId     String @unique
   description String?
-  study       Study    @relation(fields: [studyId], references: [id])
+  study       Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
   questions   FormQuestion[]
   responses   FormResponse[]
 }
@@ -262,7 +262,7 @@ model FormQuestion {
   required    Boolean
   evaluationType EvaluationType
   options     FormOption[]
-  form        Form     @relation(fields: [formId], references: [id])
+  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
 
   answers FormAnswer[]
 }
@@ -272,7 +272,7 @@ model FormOption {
   questionId String
   text     String
   score    Int?
-  question FormQuestion @relation(fields: [questionId], references: [id])
+  question FormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   selectedInAnswers FormAnswerSelectedOption[]
 }
@@ -283,8 +283,8 @@ model FormResponse {
   formId          String
   submittedAt DateTime
   answers     FormAnswer[]
-  participation Participation @relation(fields: [participationId], references: [id])
-form  Form          @relation(fields: [formId], references: [id]) 
+  participation Participation @relation(fields: [participationId], references: [id], onDelete: Cascade)
+form  Form          @relation(fields: [formId], references: [id], onDelete: Cascade) 
 }
 
 model FormAnswer {
@@ -293,8 +293,8 @@ model FormAnswer {
   questionId      String         
   text      String?
 
-   response   FormResponse @relation(fields: [responseId], references: [id])
-  question   FormQuestion @relation(fields: [questionId], references: [id])
+   response   FormResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  question   FormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
   selectedOptions FormAnswerSelectedOption[]
 }
 
@@ -303,8 +303,8 @@ model FormAnswerSelectedOption {
   answerId     String
   optionId     String
 
-  answer       FormAnswer   @relation(fields: [answerId], references: [id])
-  option       FormOption   @relation(fields: [optionId], references: [id])
+  answer       FormAnswer   @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  option       FormOption   @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
   @@unique([answerId, optionId]) 
 }
@@ -312,7 +312,7 @@ model FormAnswerSelectedOption {
 model ThankYouCertificate {
   id               String   @id @default(cuid())
   participationId  String   @unique
-  participation    Participation @relation(fields: [participationId], references: [id])
+  participation    Participation @relation(fields: [participationId], references: [id], onDelete: Cascade)
   
   studyName         String
   participantName  String
