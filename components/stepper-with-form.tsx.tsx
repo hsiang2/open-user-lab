@@ -5,8 +5,8 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import MultipleSelector, { Option } from "@/components/ui/multipleSelector";
 import { BACKGROUND_CATEGORIES, GENDERS, LANGUAGES, RECRUITMENT_FORMATS, REGIONS } from "@/lib/constants";
-import { createStudyFullSchema, criteriaUiSchema, insertCriteria, insertParticipantWorkflowStep, insertRecruitmentSchema, insertStudySchema, insertStudyWorkflowStep } from "@/lib/validators";
-import { Criteria, CriteriaUiValues, MatchLevel, Recruitment, Study, StudyCreatePayload, StudyFullInput } from "@/types";
+import { createStudyFullSchema, criteriaUiSchema, insertParticipantWorkflowStep, insertRecruitmentSchema, insertStudySchema, insertStudyWorkflowStep } from "@/lib/validators";
+import { Criteria, CriteriaUiValues, MatchLevel, StudyCreatePayload, StudyFullInput } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Control, Controller, FieldPath, Resolver, useFieldArray, useForm, useFormContext, UseFormWatch } from "react-hook-form";
@@ -189,7 +189,7 @@ const SessionForm = ({ showErrors }: Props) => {
             htmlFor={register("sessionDetail").name}
             className="block text-sm font-medium text-primary"
           >
-            Session Details (Optional)
+            Session Details (optional)
           </label>
           <Input
             id={register("sessionDetail").name}
@@ -228,7 +228,7 @@ const SessionForm = ({ showErrors }: Props) => {
             htmlFor={register("reward").name}
             className="block text-sm font-medium text-primary"
           >
-            Reward
+            Reward (optional)
           </label>
           <Input
             id={register("reward").name}

@@ -20,6 +20,17 @@ export const insertRecruitmentSchema = z.object({
     criteriaDescription: z.string().min(1, 'Criteria description is required').max(1000, 'Criteria description detail must be 1000 characters or fewer'),
 })
 
+export const fullRecruitmentSchema = insertRecruitmentSchema.extend({
+  description: z
+    .string()
+    .min(1, 'Description is required')
+    .max(2000, 'Description must be 2000 characters or fewer'),
+  image: z.string().min(1, 'Image is required'),
+  thankYouMessage: z
+    .string()
+    .max(2000, 'Thank you message must be 2000 characters or fewer'),
+});
+
 export const insertCriteria = z.object({
   type: z.enum(ProfileField),
   value: z.array(z.string()),
@@ -96,6 +107,12 @@ export const createStudyFullSchema = insertStudySchema
       // image: z.string().optional(),
     })
   )
+
+export const recruitmentGoalSchema = z.object({
+  autoCloseSelectedCount: z.number().int().positive().nullable().optional(),
+  autoCloseApplicantCount: z.number().int().positive().nullable().optional(),
+  autoCloseDate: z.date().nullable().optional(),
+});
 
 
 // Schema for signing users in

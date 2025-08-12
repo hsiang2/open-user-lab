@@ -5,6 +5,8 @@ import { slugify } from '../utils';
 import { auth } from '@/auth';
 import { StudyCreatePayload, StudyFullInput } from '@/types';
 import { revalidatePath } from 'next/cache';
+import { fullRecruitmentSchema, recruitmentGoalSchema } from '../validators';
+import z from 'zod';
 
 // Get latest study
 export async function getLatestStudies() {
@@ -301,6 +303,44 @@ export async function resumeRecruitment(slug: string) {
   revalidatePath(pathFor(slug));
 }
 
+//檢查
+export async function patchRecruitmentGoal(
+  slug: string,
+  patchRaw: z.infer<typeof recruitmentGoalSchema>
+) {
+  const patch = recruitmentGoalSchema.parse(patchRaw);
+
+  const study = await prisma.study.findUnique({
+    where: { slug },
+    select: { id: true },
+  });
+  if (!study) throw new Error("Study not found");
+
+  let autoCloseDate = patch.autoCloseDate ?? null;
+  if (autoCloseDate) {
+    autoCloseDate = new Date(autoCloseDate);
+    autoCloseDate.setHours(23, 59, 59, 999);
+  }
+
+  await prisma.recruitment.upsert({
+    where: { studyId: study.id },
+    create: {
+      studyId: study.id,
+      autoCloseSelectedCount: patch.autoCloseSelectedCount ?? null,
+      autoCloseApplicantCount: patch.autoCloseApplicantCount ?? null,
+      autoCloseDate,
+    },
+    update: {
+      autoCloseSelectedCount: patch.autoCloseSelectedCount ?? null,
+      autoCloseApplicantCount: patch.autoCloseApplicantCount ?? null,
+      autoCloseDate,
+    },
+  });
+
+  revalidatePath(`/my-studies/view/${slug}/overview`);
+  revalidatePath(`/recruitment/${slug}`);
+}
+
 export async function deleteStudy(slug: string) {
   const study = await prisma.study.findUnique({ where: { slug }, select: { id: true } });
   if (!study) throw new Error("Study not found");
@@ -308,4 +348,48 @@ export async function deleteStudy(slug: string) {
   await prisma.study.delete({ where: { slug } });
 
   revalidatePath("/my-studies");
+}
+
+
+export async function patchRecruitment(
+  slug: string,
+  patchRaw: z.infer<typeof fullRecruitmentSchema>
+) {
+  const patch = fullRecruitmentSchema.parse(patchRaw);
+
+  const study = await prisma.study.findUnique({
+    where: { slug },
+    select: { id: true },
+  });
+  if (!study) throw new Error("Study not found");
+
+  await prisma.recruitment.upsert({
+    where: { studyId: study.id },
+    create: {
+      studyId: study.id,
+      reward: patch.reward ?? null,
+      format: patch.format ?? [],
+      formatOther: patch.formatOther ?? null,
+      durationMinutes: patch.durationMinutes ?? null,
+      sessionDetail: patch.sessionDetail ?? null,
+      criteriaDescription: patch.criteriaDescription ?? null,
+      description: patch.description,
+      image: patch.image,
+      thankYouMessage: patch.thankYouMessage,
+    },
+    update: {
+      reward: patch.reward ?? null,
+      format: patch.format ?? [],
+      formatOther: patch.formatOther ?? null,
+      durationMinutes: patch.durationMinutes ?? null,
+      sessionDetail: patch.sessionDetail ?? null,
+      criteriaDescription: patch.criteriaDescription ?? null,
+      description: patch.description,
+      image: patch.image,
+      thankYouMessage: patch.thankYouMessage,
+    },
+  });
+
+  revalidatePath(`/my-studies/view/${slug}/recruitment-settings`);
+  revalidatePath(`/recruitment/${slug}`);
 }

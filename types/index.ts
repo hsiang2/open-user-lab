@@ -1,4 +1,5 @@
-import { avatarSchema, createStudyFullSchema, criteriaUiSchema, insertCriteria, insertParticipantWorkflowStep, insertRecruitmentSchema, insertStudySchema, insertStudyWorkflowStep, userProfileSchema } from '@/lib/validators'
+import { avatarSchema, createStudyFullSchema, criteriaUiSchema, fullRecruitmentSchema, insertCriteria, insertParticipantWorkflowStep, insertRecruitmentSchema, insertStudySchema, insertStudyWorkflowStep, recruitmentGoalSchema, userProfileSchema } from '@/lib/validators'
+import { Description } from '@radix-ui/react-dialog';
 import { z } from 'zod'
 
 export type Study = z.infer<typeof insertStudySchema> & {
@@ -17,19 +18,18 @@ export type Study = z.infer<typeof insertStudySchema> & {
     // StudySaved: StudySaved[];
 };
 
-export type Recruitment = z.infer<typeof insertRecruitmentSchema> & {
-    id: string
-  studyId: string
-      // status: StudyStatusEnum,
-    // recruitmentStatus: RecruitmentStatusEnum
-//   id        String   @id @default(cuid())
-//   studyId   String @unique
-//   study     Study    @relation(fields: [studyId], references: [id])
+export type RecruitmentFormValues = z.infer<typeof fullRecruitmentSchema>;
 
-//   image      String?
-//   avatarResearcher      String?
-//   thankYouMessage String?
-};
+// export type Recruitment = z.infer<typeof insertRecruitmentSchema> & {
+//     id: string;
+//     studyId: string;
+
+//     description: string;
+//     image: string;
+//     avatarAccessoryResearcher: string;
+//     avatarBaseResearcher: string;
+//    thankYouMessage: string;
+// };
 
 export type Criteria = z.infer<typeof insertCriteria> & {
   //   id: string
