@@ -29,6 +29,8 @@ export const fullRecruitmentSchema = insertRecruitmentSchema.extend({
   thankYouMessage: z
     .string()
     .max(2000, 'Thank you message must be 2000 characters or fewer'),
+  avatarBaseResearcher: z.string().nullable().optional(),
+  avatarAccessoryResearcher:  z.string().nullable().optional(),
 });
 
 export const insertCriteria = z.object({

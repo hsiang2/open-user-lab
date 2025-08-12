@@ -23,7 +23,7 @@ const actionConfig: Record<
   goLive: {
     title: "Make this study live?",
     description:
-      "Publishing will set the study status to ongoing, make it visible to participants, and open recruitment. Recruitment criteria and application questions will be locked after publishing. You can pause recruitment or end the study at any time.",
+      "Publishing will set the study status to ongoing, make it visible to participants, and open recruitment. Application questions will be locked after publishing. You can pause recruitment or end the study at any time.",
     button: "Go live",
     variant: "default",
   },
@@ -44,7 +44,7 @@ const actionConfig: Record<
   resumeRecruitment: {
     title: "Resume recruitment?",
     description:
-      "Resuming will set the recruitment status to open, make the study visible to participants again, and allow new applications. Recruitment criteria and application questions remain locked.",
+      "Resuming will set the recruitment status to open, make the study visible to participants again, and allow new applications. ",
     button: "Resume recruitment",
     variant: "secondary",
   },

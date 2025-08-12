@@ -63,6 +63,7 @@ model User {
   profile      UserProfile?
   collaborations Collaborator[]
   participations Participation[]
+  invatations Invitation[]
   savedStudies StudySaved[]
   ParticipantSaved ParticipantSaved[]
 
@@ -99,6 +100,7 @@ model Study {
 
   collaborators          Collaborator[]
   participations Participation[]
+  invatations Invitation[]
   participantSaved     ParticipantSaved[]
   participantWorkflow  ParticipantWorkflow?
   studyWorkflow        StudyWorkflow? 
@@ -125,15 +127,35 @@ model Participation {
   userId             String
   studyId            String
   status             ParticipationStatus
-  inviteStatus       InviteStatus
+ 
   appliedAt          DateTime?
-  invitedAt          DateTime?
+ 
   user               User     @relation(fields: [userId], references: [id])
   study              Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
   formResponses      FormResponse[]
   workflowStepStatuses ParticipantWorkflowStepStatus[]
   thankYouCertificate ThankYouCertificate?
+
+// 防止同一 user 重覆報名同一 study
+   @@unique([userId, studyId])
 }
+
+model Invitation {
+  id        String   @id @default(cuid())
+  studyId   String
+  userId    String
+  status    InvitationStatus @default(pending)
+  createdAt DateTime @default(now())
+  respondedAt DateTime?    
+
+  study     Study   @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([studyId, userId]) // 一個人對同一研究只能有一筆邀請
+  @@index([studyId, status])
+  @@index([userId, status])
+}
+
 
 model ParticipantWorkflowStepStatus {
   id            String   @id @default(cuid())
@@ -355,17 +377,16 @@ enum RecruitmentStatus {
 
 enum ParticipationStatus {
   Applied
-  Invited
   Selected
   Rejected
   Withdrawn
   Completed
 }
 
-enum InviteStatus {
+enum InvitationStatus {
   pending
-  accepted
   rejected
+  applied
 }
 
 enum StepStatus {

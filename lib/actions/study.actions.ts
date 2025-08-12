@@ -12,7 +12,29 @@ import z from 'zod';
 export async function getLatestStudies() {
     const data = await prisma.study.findMany({
         take: LATEST_STUDIES_LIMIT,
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        include: {
+          collaborators: {
+              select: {
+                id: true,
+                role: true,
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    profile: {
+                      select: {
+                        avatarBase: true,
+                        avatarAccessory: true,
+                        avatarBg: true,
+                      },
+                    },
+                  },
+                }
+              }
+            },
+          recruitment: true,
+        },
     })
     
     return data

@@ -2,10 +2,12 @@
 import { auth } from "@/auth";
 import StudyImage from "@/components/shared/image/StudyImage";
 import { Button } from "@/components/ui/button";
+import { prisma } from "@/db/prisma";
 import { getStudyForExplore } from "@/lib/actions/study.actions";
 import { AVATAR_ACCESSORY_KEYS, AVATAR_STYLE, STUDY_IMAGE } from "@/lib/constants";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import InviteBanner from "./InviteBanner";
+import { ApplyButton } from "./ApplyButton";
 
 const StudyDetailsRecruitmentPage = async (props: {
     params: Promise<{ slug: string }>;
@@ -16,9 +18,27 @@ const StudyDetailsRecruitmentPage = async (props: {
     if (!study) notFound();
 
     const session = await auth();
-    const currentUser = session?.user?.id;
-    
+    const userId = session?.user?.id?? null;
 
+    let pendingInvitation: { id: string } | null = null;
+    let existingParticipation: | { id: string }  | null = null;
+
+    if (userId) {
+        pendingInvitation = await prisma.invitation.findFirst({
+            where: { studyId: study.id, userId, status: "pending" },
+            select: { id: true },
+        });
+
+        existingParticipation = await prisma.participation.findFirst({
+            where: {
+                studyId: study.id,
+                userId,
+            
+            },
+            select: { id: true },
+        });
+    }
+    
     return ( 
         <div className="flex flex-col flex-center">
             <h1 className="text-title mb-4">{study.name}</h1>
@@ -30,9 +50,6 @@ const StudyDetailsRecruitmentPage = async (props: {
                         background={study.recruitment?.image  as (typeof STUDY_IMAGE)[number] }  
                         styleResearcher= {study.recruitment?.avatarBaseResearcher  as (typeof AVATAR_STYLE)[number] } 
                         accessoryResearcher= {study.recruitment?.avatarAccessoryResearcher as (typeof AVATAR_ACCESSORY_KEYS)[number] } 
-
-                        styleParticipant= {study.recruitment?.avatarBaseResearcher  as (typeof AVATAR_STYLE)[number] } 
-                        accessoryParticipant= {study.recruitment?.avatarAccessoryResearcher as (typeof AVATAR_ACCESSORY_KEYS)[number] } 
                     />
                  </div>
                    
@@ -70,20 +87,20 @@ const StudyDetailsRecruitmentPage = async (props: {
                 </div>
             </div>
 
+            {pendingInvitation && (
+                <InviteBanner invitationId={pendingInvitation.id} />
+            )}
+
             <div className="flex justify-center gap-2">
                 {/* TODO */}
-                <Button variant="secondary" type="button">
+                <Button disabled={!(study.status==='ongoing')} variant="secondary" type="button">
                     Share
                 </Button>
-                <Button disabled={!currentUser} variant="secondary" type="button">
+                <Button disabled={!userId || !(study.status==='ongoing')} variant="secondary" type="button">
                     Save
                 </Button>
-                <Button disabled={!currentUser}>
-                    Apply
-                </Button>
+                <ApplyButton slug={slug} disabled={!userId || (study.recruitmentStatus === 'closed') || !!existingParticipation} />
             </div>
-            
-         
         </div>
     );
 }

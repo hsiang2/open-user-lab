@@ -1,5 +1,4 @@
 import { avatarSchema, createStudyFullSchema, criteriaUiSchema, fullRecruitmentSchema, insertCriteria, insertParticipantWorkflowStep, insertRecruitmentSchema, insertStudySchema, insertStudyWorkflowStep, recruitmentGoalSchema, userProfileSchema } from '@/lib/validators'
-import { Description } from '@radix-ui/react-dialog';
 import { z } from 'zod'
 
 export type Study = z.infer<typeof insertStudySchema> & {
@@ -13,7 +12,7 @@ export type Study = z.infer<typeof insertStudySchema> & {
     // participantWorkflow?:  ParticipantWorkflow;
     // studyWorkflow?:        StudyWorkflow;
     // criteria:              Criteria[];
-    // recruitment?:           Recruitment;
+    recruitment?:           RecruitmentFormValues;
     // form?:                  Form;
     // StudySaved: StudySaved[];
 };
@@ -82,5 +81,15 @@ export type Certificate = {
   avatarBaseResearcher: string | null;
   avatarAccessoryResearcher: string | null;
   createdAt: Date;
+};
+
+export type CheckResult = {
+  ok: boolean;
+  hasForm: boolean;
+  missingRequired: string[];
+  missingOptional: string[];
+  requiredMismatches: string[];
+  optionalMismatches: string[];
+  reason?: string; // 顯示用
 };
 

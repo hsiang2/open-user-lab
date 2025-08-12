@@ -8,14 +8,14 @@ const StudyImage = ({
     background = STUDY_IMAGE[0], 
     styleResearcher = AVATAR_STYLE[0], 
     accessoryResearcher = null,
-    styleParticipant = AVATAR_STYLE[0], 
+    styleParticipant = null, 
     accessoryParticipant = null
 } : {
     width: number; 
     background: (typeof STUDY_IMAGE)[number]; 
     styleResearcher: (typeof AVATAR_STYLE)[number]; 
     accessoryResearcher:(typeof AVATAR_ACCESSORY_KEYS)[number] | null;
-    styleParticipant?: (typeof AVATAR_STYLE)[number]; 
+    styleParticipant?: (typeof AVATAR_STYLE)[number]| null; 
     accessoryParticipant?: (typeof AVATAR_ACCESSORY_KEYS)[number] | null
 }) => {
     const scale = width / BASE;
