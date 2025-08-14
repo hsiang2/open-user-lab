@@ -443,6 +443,7 @@ export function CriteriaForm({showErrors}: Props) {
 
   return (
     <div className="space-y-6 w-full max-w-[800px]">
+      {/* <EligibleCountChip /> */}
       <CriterionAgeRow
         levelName="criteria.age.matchLevel"
         minName="criteria.age.min"

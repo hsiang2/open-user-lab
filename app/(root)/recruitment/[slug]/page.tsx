@@ -88,7 +88,9 @@ const StudyDetailsRecruitmentPage = async (props: {
             </div>
 
             {pendingInvitation && (
-                <InviteBanner invitationId={pendingInvitation.id} />
+                <div className="mb-8">
+                 <InviteBanner invitationId={pendingInvitation.id} />
+                </div>
             )}
 
             <div className="flex justify-center gap-2">

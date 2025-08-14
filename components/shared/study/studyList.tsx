@@ -1,6 +1,6 @@
 import { Study } from "@/types";
-import StudyCardResearcher from "./StudyCardResearcher";
 import StudyCardExplore from "./studyCardExplore";
+import StudyCardResearcher from "./StudyCardResearcher";
 
 
 const StudyList = ({data, type, limit}: {data: Study[]; type: "researcher"|'participant' | 'explore'; limit?: number}) => {

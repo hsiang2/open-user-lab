@@ -3,7 +3,7 @@ import { prisma } from '@/db/prisma'
 import { LATEST_STUDIES_LIMIT, STUDY_IMAGE } from "../constants";
 import { slugify } from '../utils';
 import { auth } from '@/auth';
-import { StudyCreatePayload, StudyFullInput } from '@/types';
+import { StudyCreatePayload } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { fullRecruitmentSchema, recruitmentGoalSchema } from '../validators';
 import z from 'zod';

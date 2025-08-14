@@ -128,7 +128,8 @@ model Participation {
   studyId            String
   status             ParticipationStatus
  
-  appliedAt          DateTime?
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt 
  
   user               User     @relation(fields: [userId], references: [id])
   study              Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
@@ -305,8 +306,9 @@ model FormResponse {
   formId          String
   submittedAt DateTime
   answers     FormAnswer[]
+
   participation Participation @relation(fields: [participationId], references: [id], onDelete: Cascade)
-form  Form          @relation(fields: [formId], references: [id], onDelete: Cascade) 
+  form  Form          @relation(fields: [formId], references: [id], onDelete: Cascade) 
 }
 
 model FormAnswer {
@@ -314,6 +316,9 @@ model FormAnswer {
   responseId String
   questionId      String         
   text      String?
+
+  score           Int? 
+  manualDecision  String?  //('Pass', 'Fail', 'Unsure')
 
    response   FormResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
   question   FormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
