@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
 import { CheckResult } from "@/types";
 import { Criterion, evaluate, getProfileValue, isPreferNotToSay, match } from "./eligibility";
-import { ParticipationStatus, StepStatus } from "@prisma/client";
+import { CollaboratorRole, ParticipationStatus, StepStatus } from "@prisma/client";
 
 // function getProfileValue(profile: any, type: string): unknown {
 //   switch (type) {
@@ -463,6 +463,7 @@ export type WorkflowStepDTO = {
 
 export type RowDTO = {
   participationId: string;
+  participationStatus: ParticipationStatus;
   user: { id: string; name: string | null };
   statuses: Array<{
     stepId: string;
@@ -516,6 +517,7 @@ export async function listSelectedWithWorkflow(slug: string): Promise<{
     where: { studyId: study.id, status: { in: ["Selected", "Completed"] } },
     select: {
       id: true,
+      status: true,
       user: { select: { id: true, name: true } },
       workflowStepStatuses: {
         select: { id: true, status: true, completedAt: true, stepId: true },
@@ -537,7 +539,7 @@ export async function listSelectedWithWorkflow(slug: string): Promise<{
           }
         : { stepId: st.id, status: "todo" as StepStatus };
     });
-    return { participationId: p.id, user: p.user, statuses };
+    return { participationId: p.id, participationStatus: p.status, user: p.user, statuses };
   });
 
   return { steps, rows };
@@ -846,8 +848,15 @@ export async function inviteUserToStudy(slug: string, userId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthenticated");
 
-  const study = await prisma.study.findUnique({ where: { slug }, select: { id: true } });
+  const study = await prisma.study.findUnique({ where: { slug }, select: { id: true, status: true, recruitmentStatus: true } });
   if (!study) throw new Error("Study not found");
+
+   if (study.status !== "ongoing") {
+    throw new Error("The study is not live. Go live before inviting participants.");
+  }
+  if (study.recruitmentStatus !== "open") {
+    throw new Error("Recruitment is closed. Reopen recruitment before inviting.");
+  }
 
   const exists = await prisma.invitation.findFirst({
     where: { studyId: study.id, userId, status: { in: ["pending", "applied"] } },
@@ -900,9 +909,102 @@ export async function updateParticipationStatus(id: string, next:
   return { ok: true };
 }
 
+
+export async function finalizeParticipantWithThankYou(args: {
+  participationId: string;
+}) {
+  const session = await auth();
+  const actorId = session?.user?.id;
+  if (!actorId) throw new Error("Unauthenticated");
+
+  // 取 participation + 權限必要資料
+  const p = await prisma.participation.findUnique({
+    where: { id: args.participationId },
+    select: {
+      id: true,
+      status: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          profile: { select: { avatarBase: true, avatarAccessory: true } },
+        },
+      },
+      study: {
+        select: {
+          id: true,
+          name: true,
+          collaborators: {
+            where: { userId: actorId, role: { in: [CollaboratorRole.owner, CollaboratorRole.editor] } },
+            select: { id: true },
+          },
+          recruitment: {
+            select: { image: true, thankYouMessage: true }
+          }
+        },
+      },
+    },
+  });
+  if (!p) throw new Error("Participation not found");
+
+  // 權限：僅研究協作者
+  if (p.study.collaborators.length === 0) throw new Error("Not allowed");
+
+  // 研究者資訊（名字、頭像）
+  const researcher = await prisma.user.findUnique({
+    where: { id: actorId },
+    select: {
+      name: true,
+      profile: { select: { avatarBase: true, avatarAccessory: true } },
+    },
+  });
+
+  // 同一個交易：upsert 感謝卡 + 將參與者結案
+  const result = await prisma.$transaction(async (tx) => {
+    const cert = await tx.thankYouCertificate.upsert({
+      where: { participationId: p.id },
+      update: {
+        message: p.study.recruitment?.thankYouMessage ?? null,
+        image: p.study.recruitment?.image ?? null,
+        // 最新頭像（若對象更新過）
+        avatarBaseParticipant: p.user.profile?.avatarBase ?? null,
+        avatarAccessoryParticipant: p.user.profile?.avatarAccessory ?? null,
+        avatarBaseResearcher: researcher?.profile?.avatarBase ?? null,
+        avatarAccessoryResearcher: researcher?.profile?.avatarAccessory ?? null,
+      },
+      create: {
+        participationId: p.id,
+        studyName: p.study.name,
+        participantName: p.user.name,
+        researcherName: researcher?.name ?? "Researcher",
+        message: p.study.recruitment?.thankYouMessage ?? null,
+        image: p.study.recruitment?.image ?? null,
+        avatarBaseParticipant: p.user.profile?.avatarBase ?? null,
+        avatarAccessoryParticipant: p.user.profile?.avatarAccessory ?? null,
+        avatarBaseResearcher: researcher?.profile?.avatarBase ?? null,
+        avatarAccessoryResearcher: researcher?.profile?.avatarAccessory ?? null,
+      },
+      select: { id: true },
+    });
+
+    // 設為 Completed
+    await tx.participation.update({
+      where: { id: p.id },
+      data: { status: ParticipationStatus.Completed },
+    });
+
+    return { certificateId: cert.id };
+  });
+
+  return { ok: true, ...result };
+}
+
+
+
 // !!TODO 預查人數
 export async function countEligibleProfiles(criteria: Criterion[]) {
   const where = buildRequiredWhere(criteria);
   // 若要排除已在某 study 的人，可以加 notIn 條件
   return prisma.userProfile.count({ where: where.profile.is });
 }
+

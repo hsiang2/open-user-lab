@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import StepHeader from "./StepHeader";
-import { RowDTO, setParticipantStepStatus } from "@/lib/actions/participation.actions";
+import { finalizeParticipantWithThankYou, RowDTO, setParticipantStepStatus } from "@/lib/actions/participation.actions";
 import { Check } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
@@ -25,15 +25,7 @@ export default function SelectedTableClient({ steps, rows }: { steps: any[]; row
     });
   };
 
-  const sendThankYou = async (pId: string) => {
-    setBusyKey(`thankyou:${pId}`);
-    start(async () => {
-      // TODO: call your createThankYouCertificate action here
-      console.log("Sending Thank You to", pId);
-      router.refresh();
-      setBusyKey(null);
-    });
-  };
+
 
   return (
     <div className="my-8">
@@ -56,8 +48,10 @@ export default function SelectedTableClient({ steps, rows }: { steps: any[]; row
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((r:RowDTO) => (
-            <TableRow key={r.participationId}>
+          {rows.map((r:RowDTO) => {
+            const rowLocked = r.participationStatus === "Completed";
+            return(
+              <TableRow key={r.participationId} className={rowLocked ? "opacity-60" : ""}>
               <TableCell className="font-medium">
                 {r.user.name}
               </TableCell>
@@ -72,7 +66,7 @@ export default function SelectedTableClient({ steps, rows }: { steps: any[]; row
                         <Button
                       variant={checked ? "default" : "outline"}
                       size="sm"
-                      disabled={loading}
+                       disabled={loading || rowLocked}
                     >
                         {loading ? "..." : (checked ? <Check size={14}/> : <Check size={14} color="#fff"/>)}
                     </Button>
@@ -108,21 +102,32 @@ export default function SelectedTableClient({ steps, rows }: { steps: any[]; row
                         <Button
                         size="sm"
                         variant="secondary"
-                        disabled={isPending && busyKey === `thankyou:${r.participationId}`}
+                       disabled={rowLocked || (isPending && busyKey === `thankyou:${r.participationId}`)}
                         >
                         {isPending && busyKey === `thankyou:${r.participationId}` ? "..." : "Send"}
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                        <AlertDialogTitle>Send Thank You?</AlertDialogTitle>
+                        <AlertDialogTitle>Send Thank You & complete?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will send a thank-you certificate to this participant.
+                             This will send a thank‑you certificate and mark this participant as <b>Completed</b>.
+                              After this, the row will be locked and cannot be edited.
                         </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => sendThankYou(r.participationId)}>
+                        <AlertDialogAction                 
+                          onClick={() => {
+                            const key = `thankyou:${r.participationId}`;
+                            setBusyKey(key);
+                            start(async () => {
+                              await finalizeParticipantWithThankYou({ participationId: r.participationId });
+                              router.refresh();
+                              setBusyKey(null);
+                            });
+                          }}
+                        >
                             Confirm
                         </AlertDialogAction>
                         </AlertDialogFooter>
@@ -130,7 +135,9 @@ export default function SelectedTableClient({ steps, rows }: { steps: any[]; row
                     </AlertDialog>
               </TableCell>
             </TableRow>
-          ))}
+            )
+            
+          })}
         </TableBody>
       </Table>
     </div>

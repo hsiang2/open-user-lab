@@ -1,6 +1,7 @@
 import { Study } from "@/types";
 import StudyCardExplore from "./studyCardExplore";
 import StudyCardResearcher from "./StudyCardResearcher";
+import StudyCardParticipant from "./studyCardParticipant";
 
 
 const StudyList = ({data, type, limit}: {data: Study[]; type: "researcher"|'participant' | 'explore'; limit?: number}) => {
@@ -13,7 +14,7 @@ const StudyList = ({data, type, limit}: {data: Study[]; type: "researcher"|'part
                         type === "researcher" ? 
                         <StudyCardResearcher key={study.id} study={study} />: 
                         type === "participant" ? 
-                        <></> : 
+                        <StudyCardParticipant key={study.id} study={study} /> : 
                         <StudyCardExplore key={study.id} study={study} />
                         
                     ))}

@@ -3,6 +3,7 @@ import { inviteUserToStudy, listPotentialParticipantsForStudy } from "@/lib/acti
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PotentialParticipantCard } from "./PotentialParticipantsCard";
+import { prisma } from "@/db/prisma";
 
 type PageProps = {
   params: { slug: string };
@@ -16,9 +17,17 @@ const PotentialParticipantsPage = async ({ params, searchParams }: PageProps) =>
     // const onlyEligible = searchParams.onlyEligible !== "false"; // 預設 true
     // const cursor = searchParams.cursor;
 
+    const study = await prisma.study.findUnique({
+        where: { slug },
+        select: { id:true, status:true, recruitmentStatus:true },
+    });
+    if (!study) throw new Error("Study not found");
+
+    const canInvite= study.status === "ongoing" && study.recruitmentStatus === "open"
+
     const { items, nextCursor } = await listPotentialParticipantsForStudy({
         slug,
-        take: 20,
+        take: 9,
         cursor,
     });
 
@@ -32,7 +41,33 @@ const PotentialParticipantsPage = async ({ params, searchParams }: PageProps) =>
 
 
     return (  
-         <div className="my-8 space-y-10">
+         <div className="relative my-8 space-y-10">
+
+            {!canInvite && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl
+                                backdrop-blur-[2px] bg-background/60 ">
+                <div className="max-w-md text-center space-y-3 p-6 rounded-lg bg-accent shadow">
+                    <div className="text-lg font-semibold">Invitations are disabled</div>
+                    <p className="text-sm text-muted-foreground">
+                    {study.status !== "ongoing"
+                        ? "This study is still a draft. Go live to start inviting participants."
+                        : "Recruitment is closed. Reopen recruitment to invite participants."}
+                    </p>
+                    <div className="flex gap-2 justify-center pt-2">
+                    {study.status !== "ongoing" ? (
+                        <Link href={`/my-studies/view/${slug}/overview`}>
+                        <Button>Go live</Button>
+                        </Link>
+                    ) : (
+                        <Link href={`/my-studies/view/${slug}/overview`}>
+                        <Button>Reopen recruitment</Button>
+                        </Link>
+                    )}
+                    </div>
+                </div>
+                </div>
+            )}
+
             {/* <div className="flex justify-end">
                 <Link
                     href={`?onlyEligible=${!onlyEligible}`}

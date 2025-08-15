@@ -170,7 +170,7 @@ const SessionForm = ({ showErrors }: Props) => {
             htmlFor={register("durationMinutes").name}
             className="block text-sm font-medium text-primary"
           >
-            Estimated Duration
+            Estimated Duration (minutes)
           </label>
           <Input
             id={register("durationMinutes").name}

@@ -11,6 +11,10 @@ import z from 'zod';
 // Get latest study
 export async function getLatestStudies() {
     const data = await prisma.study.findMany({
+      where: {
+      status: 'ongoing', 
+      recruitmentStatus: 'open'
+    },
         take: LATEST_STUDIES_LIMIT,
         orderBy: { createdAt: 'desc' },
         include: {
@@ -106,6 +110,25 @@ export async function getStudyForExplore(slug: string) {
       where: { slug },
       include: {
         recruitment: true,
+        collaborators: {
+              select: {
+                id: true,
+                role: true,
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    profile: {
+                      select: {
+                        avatarBase: true,
+                        avatarAccessory: true,
+                        avatarBg: true,
+                      },
+                    },
+                  },
+                }
+              }
+            },
       },
     });
   }
@@ -136,12 +159,9 @@ export async function generateUniqueSlug(name: string): Promise<string> {
   }
   
 export async function getThankYouCertificates(userId: string) {
-  return await prisma.thankYouCertificate.findMany({
-    where: {
-    participation: {
-      userId,
-    },
-    },
+  return prisma.thankYouCertificate.findMany({
+    where: { participation: { userId } },
+    orderBy: { createdAt: "desc" },
   });
 }
 

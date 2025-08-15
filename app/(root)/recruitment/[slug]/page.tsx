@@ -4,10 +4,12 @@ import StudyImage from "@/components/shared/image/StudyImage";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/db/prisma";
 import { getStudyForExplore } from "@/lib/actions/study.actions";
-import { AVATAR_ACCESSORY_KEYS, AVATAR_STYLE, STUDY_IMAGE } from "@/lib/constants";
+import { AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE, STUDY_IMAGE } from "@/lib/constants";
 import { notFound } from "next/navigation";
 import InviteBanner from "./InviteBanner";
 import { ApplyButton } from "./ApplyButton";
+import Avatar from "@/components/shared/avatar/Avatar";
+import Link from "next/link";
 
 const StudyDetailsRecruitmentPage = async (props: {
     params: Promise<{ slug: string }>;
@@ -42,7 +44,23 @@ const StudyDetailsRecruitmentPage = async (props: {
     return ( 
         <div className="flex flex-col flex-center">
             <h1 className="text-title mb-4">{study.name}</h1>
-            <p className="text-body mb-16">{study.recruitment?.description}</p>
+            <p className="text-body mb-4">{study.recruitment?.description}</p>
+            { study.collaborators.map((c) => (
+                 <Button variant="ghost" key={c.id} className="mb-16 h-[50px]">
+                    <Link href={`/profile/view/${c.user.id}`}>
+                        <div  className="flex space-x-4 items-center min-w-0">
+                            <div className="flex-shrink-0">
+                                <Avatar width={50} 
+                                background={c.user.profile?.avatarBg as typeof AVATAR_BACKGROUND[number]} 
+                                style={c.user.profile?.avatarBase as typeof AVATAR_STYLE[number]} 
+                                accessory={c.user.profile?.avatarAccessory as typeof AVATAR_ACCESSORY_KEYS[number] | null} 
+                                />
+                            </div>
+                            <p className="text-body font-bold truncate min-w-0">{c.user.name}</p>
+                        </div>
+                    </Link>
+                </Button>    
+            ))}
             <div className=" mb-16 flex space-x-20 flex-col justify-center md:flex-row">
                  <div className="flex-shrink-0">
                      <StudyImage 
@@ -52,7 +70,6 @@ const StudyDetailsRecruitmentPage = async (props: {
                         accessoryResearcher= {study.recruitment?.avatarAccessoryResearcher as (typeof AVATAR_ACCESSORY_KEYS)[number] } 
                     />
                  </div>
-                   
                 
                  <div className="space-y-8 max-w-xl w-full">
                     <div className="space-y-4">
@@ -65,7 +82,7 @@ const StudyDetailsRecruitmentPage = async (props: {
                    </div>
                    <div className="space-y-4">
                         <h2 className="text-subtitle">Estimated Duration</h2>
-                        <p className="text-body">{study.recruitment?.durationMinutes}</p>
+                        <p className="text-body">{study.recruitment?.durationMinutes} minutes</p>
                    </div>
                    { study.recruitment?.sessionDetail && (
                         <div className="space-y-4">

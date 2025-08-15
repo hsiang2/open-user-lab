@@ -9,6 +9,7 @@
   /* --font-sans: var(--font-geist-sans); */
   --font-sans: "Nunito", sans-serif;
   --font-heading: 'Arsenal', serif; 
+  --font-sign: "WindSong", cursive; 
 
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -184,6 +185,11 @@
 
   .form-item {
     @apply w-full sm:w-[18rem] lg:w-[25rem]
+  }
+
+  .text-sign {
+     font-family: var(--font-sign);
+     font-weight: 500;
   }
   /* .h1-bold {
     @apply font-bold text-3xl lg:text-4xl;
