@@ -107,7 +107,7 @@ export default function SelectedTableClient({ steps, rows }: { steps: any[]; row
                     <AlertDialogTrigger asChild>
                         <Button
                         size="sm"
-                        variant="outline"
+                        variant="secondary"
                         disabled={isPending && busyKey === `thankyou:${r.participationId}`}
                         >
                         {isPending && busyKey === `thankyou:${r.participationId}` ? "..." : "Send"}
