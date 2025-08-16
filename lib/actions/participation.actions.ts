@@ -4,7 +4,9 @@ import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
 import { CheckResult } from "@/types";
 import { Criterion, evaluate, getProfileValue, isPreferNotToSay, match } from "./eligibility";
-import { CollaboratorRole, ParticipationStatus, StepStatus } from "@prisma/client";
+import { CollaboratorRole, ParticipationStatus, StepStatus, StudyStatus } from "@prisma/client";
+import { normalizedFormSchema } from "../validators";
+import { revalidatePath } from "next/cache";
 
 // function getProfileValue(profile: any, type: string): unknown {
 //   switch (type) {
@@ -998,6 +1000,77 @@ export async function finalizeParticipantWithThankYou(args: {
 
   return { ok: true, ...result };
 }
+
+
+
+export async function patchForm(slug: string, payload: any) {
+  const data = normalizedFormSchema.parse(payload); // 你前端已經在用的 transform
+
+  return await prisma.$transaction(async (tx) => {
+    const study = await tx.study.findUnique({
+      where: { slug },
+      select: { id: true, status: true },
+    });
+    if (!study) throw new Error("Study not found");
+    if (study.status !== StudyStatus.draft) {
+      throw new Error("Form cannot be modified unless the study is in draft.");
+    }
+
+    const existing = await tx.form.findUnique({
+      where: { studyId: study.id },
+      select: { id: true, _count: { select: { responses: true } } },
+    });
+
+    // 題目為零 → 視為沒有表單，直接刪除並忽略 description
+    if (data.form.length === 0) {
+      if (existing) {
+        if (existing._count.responses > 0) {
+          throw new Error("Form already has responses and cannot be removed.");
+        }
+        await tx.form.delete({ where: { studyId: study.id } });
+      }
+      return { ok: true, removed: true };
+    }
+
+    // 有題目 → 建或重建
+    if (existing) {
+      if (existing._count.responses > 0) {
+        throw new Error("Form already has responses and cannot be modified.");
+      }
+      await tx.form.delete({ where: { studyId: study.id } });
+    }
+
+    await tx.form.create({
+      data: {
+        studyId: study.id,
+        description: (data.description ?? "").trim() || null,
+        questions: {
+          create: data.form.map((q) => ({
+            text: q.text,
+            required: q.required,
+            type: q.type,
+            evaluationType: q.evaluationType,
+            options: {
+              create: (q.options ?? []).map((o) => ({
+                text: o.text,
+                score:
+                  q.evaluationType === "automatic"
+                    ? typeof o.score === "number"
+                      ? o.score
+                      : 0
+                    : null,
+              })),
+            },
+          })),
+        },
+      },
+    });
+    revalidatePath(`/my-studies/view/${slug}/application-form`);
+
+    return { ok: true, removed: false };
+  });
+}
+
 
 
 

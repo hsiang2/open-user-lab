@@ -30,7 +30,7 @@ const CertificateCard = ({ certificate }: { certificate: Certificate }) => {
                         accessoryParticipant={certificate.avatarAccessoryParticipant as (typeof AVATAR_ACCESSORY_KEYS)[number]}
                     />
                     
-                    <p className="text-body mb-6">{certificate.message}</p>
+                    <p className="text-caption text-center mb-6">{certificate.message}</p>
                     <div className="self-end text-end">
                         <p className="text-sign">{certificate.researcherName}</p>
                         <p className="text-sign">{format(certificate.createdAt, "PPP")}</p>

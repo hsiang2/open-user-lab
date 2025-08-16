@@ -280,6 +280,7 @@ model Form {
 model FormQuestion {
   id          String   @id @default(cuid())
   formId      String
+  order       Int         @default(0)
   text        String
   type        QuestionType
   required    Boolean
@@ -298,6 +299,7 @@ model FormOption {
   question FormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   selectedInAnswers FormAnswerSelectedOption[]
+  @@unique([questionId, text])
 }
 
 model FormResponse {
@@ -305,10 +307,13 @@ model FormResponse {
   participationId String
   formId          String
   submittedAt DateTime
+  totalScore  Int?
   answers     FormAnswer[]
 
   participation Participation @relation(fields: [participationId], references: [id], onDelete: Cascade)
   form  Form          @relation(fields: [formId], references: [id], onDelete: Cascade) 
+  @@index([formId])
+  @@index([participationId])
 }
 
 model FormAnswer {
@@ -318,7 +323,7 @@ model FormAnswer {
   text      String?
 
   score           Int? 
-  manualDecision  String?  //('Pass', 'Fail', 'Unsure')
+  manualDecision  ManualDecision?
 
    response   FormResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
   question   FormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
@@ -419,5 +424,10 @@ enum ProfileField {
   birth
 }
 
+enum ManualDecision {
+  Pass
+  Fail
+  Unsure
+}
 
 

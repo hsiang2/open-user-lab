@@ -1,69 +1,100 @@
 "use client";
 
-import { formatOptions } from "@/components/stepper-with-form.tsx";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import MultipleSelector, { Option } from "@/components/ui/multipleSelector";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { patchRecruitment } from "@/lib/actions/study.actions";
-import { STUDY_IMAGE } from "@/lib/constants";
-import { cn } from "@/lib/utils";
-import { fullRecruitmentSchema } from "@/lib/validators";
-import { RecruitmentFormValues } from "@/types";
+import { patchForm } from "@/lib/actions/participation.actions";
+import { formSchema, normalizedFormSchema } from "@/lib/validators";
+import { FormValues, QuestionInput } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Image from "next/image";
+import { EvaluationType, QuestionType, StudyStatus } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { Resolver, useForm } from "react-hook-form";
+import { useEffect, useState, useTransition } from "react";
+import { Resolver, useFieldArray, useForm, UseFormReturn } from "react-hook-form";
+import { QuestionEditor } from "./QuestionEditor";
 
-export function ApplicationSettingForm({ recruitment, slug }: { recruitment: RecruitmentFormValues; slug: string; }) {
-    const router = useRouter();
-    const [isEditing, setIsEditing] = useState(false);
-    const [isPending, startTransition] = useTransition();
+export function ApplicationSettingForm({ 
+  initial,
+  slug,
+  studyStatus, 
+}: { 
+ initial: FormValues;
+  slug: string;
+  studyStatus: StudyStatus;
+}) {
+  const router = useRouter();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
-    const form = useForm<RecruitmentFormValues>({
-    resolver: zodResolver(fullRecruitmentSchema) as Resolver<RecruitmentFormValues>,
-    defaultValues: {
-      ...recruitment,
-    //   image: recruitment.image || STUDY_IMAGE[0],
-    //   thankYouMessage: recruitment.thankYouMessage || "Thank you for participating in our study. Your contribution is greatly appreciated!",
-    },
-     mode: "onChange",
+  const locked = studyStatus !== "draft";
+
+  const form = useForm<FormValues>({
+  resolver: zodResolver(formSchema) as Resolver<FormValues>,
+  defaultValues: initial ?? { description: null, form: [] },
+    mode: "onChange",
   });
 
+  useEffect(() => {
+    form.reset(initial ?? { description: null, form: [] });
+  }, [initial]);
+
+   const { fields, append, remove, move, insert } = useFieldArray({
+    control: form.control,
+    name: 'form'
+  });
+
+
   function onEdit() {
+    if (locked) return;
     setIsEditing(true);
   }
 
   function onCancel() {
-    form.reset(); // 回到 defaultValues
+    form.reset(initial);
     setIsEditing(false);
   }
 
-  function onSave(values: RecruitmentFormValues) {
-     const trimmedFormatOther = values.formatOther?.trim();
-
-        const payload = {
-        ...values,
-
-        formatOther:
-            values.format.includes("Other") && trimmedFormatOther
-            ? trimmedFormatOther
-            : null,
-        };
+  function onSave(values: FormValues) {
+    const payload = normalizedFormSchema.parse(values);
 
     startTransition(async () => {
-      await patchRecruitment(slug, payload);
+      await patchForm(slug, payload);
       setIsEditing(false);
-          form.reset(payload); 
-    //   router.refresh(); // 讓頁面顯示最新
+      form.reset(payload.form.length ? payload : { description: payload.description ?? null, form: [] });
+        router.refresh(); 
     });
   }
 
+  const addQuestion = () => {
+  
+      append({
+        text: "",
+        required: false,
+        type: QuestionType.text,
+        evaluationType: EvaluationType.manual,
+        options: []
+      } as QuestionInput);
+  };
+
+   const duplicate = (i: number) => {
+    const q = form.getValues(`form.${i}`) as QuestionInput & { id?: string };
+    const clone: QuestionInput = {
+      text: q.text,
+      required: q.required,
+      type: q.type,
+      evaluationType: q.evaluationType,
+      options: (q.options ?? []).map((o) => ({ text: o.text, score: o.score ?? "" })),
+    };
+    insert(i + 1, clone);
+  };
+
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSave)} className="space-y-6 w-full max-w-[600px]">
+      <form onSubmit={form.handleSubmit(onSave)} className="space-y-6 w-full max-w-[700px]">
         
         {/* Description */}
         <FormField
@@ -71,100 +102,13 @@ export function ApplicationSettingForm({ recruitment, slug }: { recruitment: Rec
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Study Description</FormLabel>
+              <FormLabel>Description (optional)</FormLabel>
               <FormControl>
-                <Textarea {...field} placeholder="Describe your study..." readOnly={!isEditing} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Image selection */}
-        <FormField
-          control={form.control}
-          name="image"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Choose an Image</FormLabel>
-              <div className={cn("flex gap-4", !isEditing && "opacity-60 pointer-events-none")}>
-                {STUDY_IMAGE.map((img) => (
-                  <div
-                    key={img}
-                    className={cn(
-                      "border rounded-md cursor-pointer p-1",
-                      field.value === img ? "border-primary" : "border-muted"
-                    )}
-                    onClick={() => field.onChange(img)}
-                  >
-                    <Image src={`/images/study/${img}.png`} alt="Study image" width={160} height={160} className="rounded-md" />
-                  </div>
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Format */}
-        <FormField
-          control={form.control}
-          name="format"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Format</FormLabel>
-              <FormControl>
-                <div className={cn(!isEditing && "opacity-60 pointer-events-none")}>
-                    <MultipleSelector
-                        value={formatOptions.filter(opt => (field.value as string[])?.includes(opt.value))}
-                        onChange={(selected: Option[]) => {
-                            field.onChange(selected.map(opt => opt.value));
-                            
-                            // form.setValue("formatOther", null);
-                        }}
-                        defaultOptions={formatOptions}
-                        placeholder="Select session formats"
-                    />
-                </div>
-               
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Format Other */}
-        {form.watch("format")?.includes("Other") && (
-          <FormField
-            control={form.control}
-            name="formatOther"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Other format (please specify)</FormLabel>
-                <FormControl>
-                  <Input {...field} readOnly={!isEditing} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        {/* Duration */}
-        <FormField
-          control={form.control}
-          name="durationMinutes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Estimated Duration (minutes)</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
-                  readOnly={!isEditing}
+                <Textarea 
+                  {...field} 
+                  value={field.value ?? ""}     
+                  placeholder="Describe your application form..." 
+                  readOnly={!isEditing || locked} 
                 />
               </FormControl>
               <FormMessage />
@@ -172,69 +116,249 @@ export function ApplicationSettingForm({ recruitment, slug }: { recruitment: Rec
           )}
         />
 
-        {/* Session Details */}
-        <FormField
-          control={form.control}
-          name="sessionDetail"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Session Details</FormLabel>
-              <FormControl>
-                <Textarea {...field}  readOnly={!isEditing}  value={field.value ?? ''} placeholder="e.g. Online survey + 30min interview" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+         {/* Questions */}
+        {fields.map((f, i) => {
+          // const type = form.watch(`form.${i}.type`);
+          // const evalType = form.watch(`form.${i}.evaluationType`);
+          const disabled = !isEditing || locked;
 
-        {/* Criteria Description */}
-        <FormField
-          control={form.control}
-          name="criteriaDescription"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Participant Criteria</FormLabel>
-              <FormControl>
-                <Input {...field}  readOnly={!isEditing}  placeholder="e.g. Aged 18–30, based in the UK" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          // // 選 automatic 改 type=text 時，清空 options 並把 evaluationType 調回 manual
+          // useEffect(() => {
+          //   if (type === QuestionType.text) {
+          //     const opts = form.getValues(`form.${i}.options`);
+          //     if (opts?.length) form.setValue(`form.${i}.options`, [], { shouldDirty: true, shouldValidate: true });
+          //     if (evalType === EvaluationType.automatic) {
+          //       form.setValue(`form.${i}.evaluationType`, EvaluationType.manual, { shouldDirty: true, shouldValidate: true });
+          //     }
+          //   }
+          // }, [type, evalType]);
 
-        {/* Reward */}
-        <FormField
-          control={form.control}
-          name="reward"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Reward (optional)</FormLabel>
-              <FormControl>
-                <Input {...field}  readOnly={!isEditing}  value={field.value ?? ''} placeholder="e.g. £15 gift card" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          //  // 巢狀 options
+          // const {
+          //   fields: optionFields,
+          //   append: appendOption,
+          //   remove: removeOption,
+          // } = useFieldArray({
+          //   control: form.control,
+          //   name: `form.${i}.options`,
+          // });
 
-        {/* Thank You Message */}
-        <FormField
-          control={form.control}
-          name="thankYouMessage"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Thank You Message</FormLabel>
-              <FormControl>
-                <Textarea {...field}  readOnly={!isEditing}  />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          return (
+            <div key={f.id} className="rounded-xl border p-4 space-y-3">
+               <div className="flex items-start gap-3">
+                  <div className="mt-2 w-8 text-center shrink-0 rounded-full bg-muted">
+                    {i + 1}
+                  </div>
+                     <QuestionEditor 
+                      index={i}
+                      disabled={disabled}
+                      form={form} // ← 傳整個 form 物件
+                    />
+                   {/* <div className="flex-1 space-y-3">
+                      <FormField
+                        control={form.control}
+                        name={`form.${i}.text`}
+                        render={({ field }) => (
+                          <FormItem>
+                           
+                            <FormControl>
+                              <Input {...field}  readOnly={disabled}  placeholder="Question" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name={`form.${i}.required`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Required</FormLabel>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  disabled={disabled}
+                                  aria-readonly={disabled}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                         <FormField
+                          control={form.control}
+                          name={`form.${i}.type`}
+                              render={({ field }) => (
+                                  <FormItem>
+                                  <FormLabel>Question Type</FormLabel>
+                                  <Select
+                                    value={field.value}
+                                    onValueChange={(val) => field.onChange(val)}
+                                    disabled={disabled}
+                                  >
+                                      <FormControl className="w-full">
+                                      <SelectTrigger>
+                                          <SelectValue placeholder="Select question type" />
+                                      </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                          {Object.values(QuestionType).map((type) => (
+                                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                                          ))}
+                                      </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                  </FormItem>
+                              )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`form.${i}.evaluationType`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Evaluation Type</FormLabel>
+                                  <Select
+                                    value={field.value}
+                                    onValueChange={(val) => {
+                                      field.onChange(val);
+                                      const isAuto = val === EvaluationType.automatic;
+                                      const opts = form.getValues(`form.${i}.options`) ?? [];
+                                      opts.forEach((_, j) => {
+                                        form.setValue(
+                                          `form.${i}.options.${j}.score`,
+                                          isAuto ? form.getValues(`form.${i}.options.${j}.score`) ?? 0 : undefined,
+                                          { shouldDirty: true, shouldValidate: true }
+                                        );
+                                      });
+                                    }}
+                                    disabled={disabled}
+                                  >
+                                      <FormControl className="w-full">
+                                      <SelectTrigger>
+                                          <SelectValue placeholder="Select evaluation type" />
+                                      </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                          <SelectItem value={EvaluationType.manual}>Manually reviewed</SelectItem>
+                                          <SelectItem value={EvaluationType.automatic} disabled={type === QuestionType.text}>Automatically scored</SelectItem>
+                                          <SelectItem value={EvaluationType.none}>Not used for evaluation</SelectItem>
+                                      </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                        />
 
-        {!isEditing ? (
+                      </div>
+                      
+
+                      {type !== QuestionType.text && (
+                        <div className="space-y-2">
+                          {optionFields.map((opt, j) => (
+                            <div key={opt.id} className="flex items-start gap-3">
+                              <div className="flex-1 grid grid-cols-[1fr_140px_auto] gap-3">
+                                 <FormField
+                                  control={form.control}
+                                   name={`form.${i}.options.${j}.text`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input {...field}  readOnly={disabled}  placeholder="Option" />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                {evalType === EvaluationType.automatic && (
+                                  <FormField
+                                    control={form.control}
+                                    name={`form.${i}.options.${j}.score`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                          <FormLabel>Score</FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              type="number"
+                                              inputMode="numeric"
+                                              step={1}
+                                              min={0}
+                                              value={field.value === undefined ? "" : field.value}
+                                              onChange={(e) => {
+                                                const v = e.target.value;
+                                                field.onChange(v === "" ? "" : Number(v));
+                                              }}
+                                              readOnly={disabled}
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                    )}  
+                                  />
+                                )}
+                              <Button type="button" variant="destructive" onClick={() => removeOption(j)} disabled={disabled}>
+                                Delete
+                              </Button>
+                              </div>
+                            </div>
+                        ))}
+                        {!disabled && (
+                          <Button
+                            type="button"
+                            onClick={() =>
+                              appendOption({
+                                text: "",
+                                // 若目前是 automatic，預設 0；否則 undefined
+                                score: evalType === EvaluationType.automatic ? 0 : undefined,
+                              })
+                            }
+                          >
+                            Add option
+                          </Button>
+                        )}
+                      </div>
+                       )}
+                  </div> */}
+
+                    {/* Row actions */}
+                  <div className="flex flex-col gap-2 shrink-0 ml-4">
+                    <Button type="button" variant="secondary" onClick={() => i > 0 && move(i, i - 1)} disabled={i === 0|| disabled}>
+                      ↑
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => i < fields.length - 1 && move(i, i + 1)}
+                      disabled={i === fields.length - 1 || disabled}
+                    >
+                      ↓
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={() => duplicate(i)} disabled={disabled}>
+                      Duplicate
+                    </Button>
+                    <Button type="button" variant="destructive" onClick={() => remove(i)} disabled={disabled}>
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+                </div>
+          );
+        })}
+
+        {!locked && isEditing && (
+          <div className="flex justify-center mb-8">
+              <Button type="button" onClick={addQuestion}>
+              Add question
+            </Button>
+          </div>
+         
+        )}
+
+        {!locked ? (
+          !isEditing ? (
             <div className="flex justify-center gap-2">
-              <Button variant="secondary" type="button" onClick={() => window.open(`/recruitment/${slug}`, "_blank")}>
+              <Button variant="secondary" type="button" onClick={() => window.open(`/apply/${slug}`, "_blank")}>
                 Preview
               </Button>
               <Button type="button" onClick={onEdit}>
@@ -250,8 +374,10 @@ export function ApplicationSettingForm({ recruitment, slug }: { recruitment: Rec
                 {isPending ? "Saving..." : "Save"}
               </Button>
             </div>
-          )}
-
+          )
+        ) : (
+          <div className="text-sm text-muted-foreground text-center">Form is locked because the study is not in draft.</div>
+        )}
       </form>
     </Form>
   );

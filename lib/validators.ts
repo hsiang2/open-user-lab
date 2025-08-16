@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE, BACKGROUND_CATEGORIES, GENDERS, LANGUAGES, RECRUITMENT_FORMATS, REGIONS } from "./constants";
-import { CriteriaMatchLevel, ProfileField } from "@prisma/client";
+import { CriteriaMatchLevel, EvaluationType, ProfileField, QuestionType } from "@prisma/client";
 
 // Schema for inserting studies
 export const insertStudySchema = z.object({
@@ -181,3 +181,95 @@ export const signUpFormSchema = z
     message: "Please specify your background",
     path: ["backgroundOther"],
   });
+
+
+
+//Form
+export const optionInputSchema = z.object({
+  text: z.string().trim().min(1, "Option is required"),
+  score: z.union([z.number().int().min(0), z.literal("")]).optional(),
+});
+
+export const questionSchema = z
+  .object({
+    text: z.string().trim().min(1, "Question is required"),
+    required: z.boolean().default(false),
+    type: z.nativeEnum(QuestionType),
+    evaluationType: z.nativeEnum(EvaluationType),
+    options: z.array(optionInputSchema).optional().default([]),
+  })
+  .superRefine((q, ctx) => {
+    if (q.type === QuestionType.text) {
+      if (q.evaluationType === EvaluationType.automatic) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["evaluationType"],
+          message: "Text questions cannot be automatically scored",
+        });
+      }
+      if (q.options && q.options.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["options"],
+          message: "Text questions should not have options",
+        });
+      }
+      return;
+    }
+
+    if (!q.options || q.options.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["options"],
+        message: "At least one option is required",
+      });
+    }
+
+    if (q.evaluationType === EvaluationType.automatic) {
+      q.options?.forEach((opt, idx) => {
+        if (opt.score === undefined || opt.score === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["options", idx, "score"],
+            message: "Score is required for automatic evaluation",
+          });
+        }
+      });
+    }
+  });
+
+export const formSchema = z.object({
+  description: z.string().max(2000).optional().nullable(),
+  form: z.array(questionSchema).default([]),
+});
+
+/** 正規化
+ * text 題清空 options
+ * automatic 題：空值視為 0 分
+ * 非 automatic 題：移除分數
+ */
+export const normalizedFormSchema = formSchema.transform((data) => {
+  const desc = data.description ?? "";
+  const description = desc.trim() === "" ? null : desc;
+
+  return {
+    ...data,
+    description,
+    form: data.form.map((q) => {
+      if (q.type === QuestionType.text) {
+        return { ...q, options: [] as Array<z.infer<typeof optionInputSchema>> };
+      }
+      const isAuto = q.evaluationType === EvaluationType.automatic;
+      const options =
+        q.options?.map((o) => ({
+          text: o.text.trim(),
+          score: isAuto
+            ? typeof o.score === "number"
+              ? o.score
+              : 0
+            : undefined,
+        })) ?? [];
+      return { ...q, options };
+    }),
+  };
+});

@@ -1,4 +1,4 @@
-import { avatarSchema, createStudyFullSchema, criteriaUiSchema, fullRecruitmentSchema, insertCriteria, insertParticipantWorkflowStep, insertRecruitmentSchema, insertStudySchema, insertStudyWorkflowStep, recruitmentGoalSchema, userProfileSchema } from '@/lib/validators'
+import { avatarSchema, createStudyFullSchema, criteriaUiSchema, formSchema, fullRecruitmentSchema, insertCriteria, insertParticipantWorkflowStep, insertRecruitmentSchema, insertStudySchema, insertStudyWorkflowStep, normalizedFormSchema, optionInputSchema, questionSchema, recruitmentGoalSchema, userProfileSchema } from '@/lib/validators'
 import { z } from 'zod'
 
 export type Study = z.infer<typeof insertStudySchema> & {
@@ -93,3 +93,8 @@ export type CheckResult = {
   reason?: string; // 顯示用
 };
 
+// Form
+export type OptionInput = z.infer<typeof optionInputSchema>;
+export type QuestionInput = z.infer<typeof questionSchema>;
+export type FormValues = z.infer<typeof formSchema>;
+export type NormalizedFormPayload = z.infer<typeof normalizedFormSchema>;
