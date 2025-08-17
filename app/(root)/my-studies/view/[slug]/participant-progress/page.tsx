@@ -4,10 +4,18 @@ import InvitedParticipants from "./InvitedParticipants";
 import { useStudy } from "../StudyProviderClient";
 import AppliedParticipants from "./AppliedParticipants";
 import SelectedParticipants from "./SelectedParticipants";
+import SortSelect from "./SortSelect";
 
-const ParticipantProgressPage = async ({params}: {params: { slug: string }}) => {
 
-    const {slug} = await params;
+type PageProps = {
+  params: { slug: string };
+  searchParams: Promise<{ sort?: string }>;
+};
+
+const ParticipantProgressPage = async ({ params, searchParams }: PageProps) => {
+
+    const { slug } = await params;
+    const { sort } = await searchParams;
 
   return (
       <div className="flex flex-col items-center my-8">
@@ -23,7 +31,12 @@ const ParticipantProgressPage = async ({params}: {params: { slug: string }}) => 
                 <SelectedParticipants slug={slug} />
           </TabsContent>
           <TabsContent value="applied"  className="w-full p-4">
-                <AppliedParticipants slug={slug} />
+                 <div className="space-y-4">
+                    <div className="flex justify-end">
+                        <SortSelect value={sort} />
+                    </div>
+                    <AppliedParticipants slug={slug} sort={sort} />
+                    </div>
           </TabsContent>
           <TabsContent value="invited" className="w-full p-4">
                 <InvitedParticipants slug={slug} />

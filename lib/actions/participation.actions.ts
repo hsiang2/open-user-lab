@@ -433,7 +433,19 @@ export type AppliedParticipantRow = {
   };
 };
 
-export async function listAppliedParticipants(slug: string): Promise<AppliedParticipantRow[]> {
+export type ApplicantSort =
+  | "score_desc"
+  | "score_asc"
+  | "manual_pass_desc"
+  | "criteria_desc"
+  | "applied_newest"
+  | "applied_oldest"
+  | "name_az";
+
+export async function listAppliedParticipants(
+  slug: string,
+  opts?: { sort?: ApplicantSort }
+): Promise<AppliedParticipantRow[]> {
   const study = await prisma.study.findUnique({
     where: { slug },
     select: {
@@ -496,7 +508,7 @@ export async function listAppliedParticipants(slug: string): Promise<AppliedPart
 
   if (!study) throw new Error("Study not found");
 
-  return study.participations.map((p) => {
+  const prevRows = study.participations.map((p) => {
     const breakdown = evaluate(p.user.profile, study.criteria as unknown as Criterion[]);
 
     const resp = p.formResponses[0] ?? null;
@@ -602,6 +614,50 @@ export async function listAppliedParticipants(slug: string): Promise<AppliedPart
       },
     };
   });
+
+   const sort = opts?.sort ?? "score_desc";
+
+  const getScore = (r: any) => Number(r.form?.totalScore ?? 0);
+  const getManualPass = (r: any) => Number(r.form?.manual?.counts?.pass ?? 0);
+  const getCriteria = (r: any) => Number(r.criteria?.score ?? 0);
+  const getAppliedAt = (r: any) => (r.appliedAt ? new Date(r.appliedAt).getTime() : 0);
+  const cmp = (n: number) => (n < 0 ? -1 : n > 0 ? 1 : 0);
+
+  const rows = [...prevRows].sort((a, b) => {
+    switch (sort) {
+      case "score_desc":
+        return (
+          cmp(getScore(b) - getScore(a)) ||
+          cmp(getAppliedAt(b) - getAppliedAt(a))
+        );
+      case "score_asc":
+        return (
+          cmp(getScore(a) - getScore(b)) ||
+          cmp(getAppliedAt(b) - getAppliedAt(a))
+        );
+      case "manual_pass_desc":
+        return (
+          cmp(getManualPass(b) - getManualPass(a)) ||
+          cmp(getAppliedAt(b) - getAppliedAt(a))
+        );
+      case "criteria_desc":
+        return (
+          cmp(getCriteria(b) - getCriteria(a)) ||
+          cmp(getAppliedAt(b) - getAppliedAt(a))
+        );
+      case "applied_newest":
+        return cmp(getAppliedAt(b) - getAppliedAt(a));
+      case "applied_oldest":
+        return cmp(getAppliedAt(a) - getAppliedAt(b));
+      case "name_az":
+        return a.user.name.localeCompare(b.user.name);
+      default:
+        return 0;
+    }
+  });
+
+  return rows;
+
 }
 
 export async function updateManualDecisions(input: {

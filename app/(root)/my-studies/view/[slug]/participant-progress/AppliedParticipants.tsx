@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { listAppliedParticipants, } from "@/lib/actions/participation.actions";
+import { ApplicantSort, listAppliedParticipants, } from "@/lib/actions/participation.actions";
 import Link from "next/link";
 import RowActions from "./RowAction";
 import { Check, X } from "lucide-react";
@@ -12,9 +12,9 @@ import { SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/compone
 import ManualReviewDialog from "./ManualReviewDialog";
 
 
-const AppliedParticipants = async ({slug} : {slug: string}) => {
+const AppliedParticipants = async ({slug, sort} : {slug: string, sort?: string}) => {
     
-    const participation = await listAppliedParticipants(slug)
+    const participation = await listAppliedParticipants(slug, { sort: (sort as ApplicantSort) ?? "score_desc" })
 
     return (
        <div className="my-8">
