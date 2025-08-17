@@ -4,9 +4,10 @@ import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
 import { CheckResult } from "@/types";
 import { Criterion, evaluate, getProfileValue, isPreferNotToSay, match } from "./eligibility";
-import { CollaboratorRole, ParticipationStatus, StepStatus, StudyStatus } from "@prisma/client";
+import { CollaboratorRole, ParticipationStatus, QuestionType, RecruitmentStatus, StepStatus, StudyStatus } from "@prisma/client";
 import { normalizedFormSchema } from "../validators";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "next/cache";import { redirect } from "next/navigation";
+;
 
 // function getProfileValue(profile: any, type: string): unknown {
 //   switch (type) {
@@ -365,27 +366,118 @@ export async function listInvitationsForStudy(slug: string) {
 //   // return { items, nextCursor };
 // }
 
-export async function listAppliedParticipants(slug: string) {
+export type ManualDecision = "Pass" | "Fail" | "Unsure" | null;
+
+export type AppliedParticipantRow = {
+  id: string;                // participationId
+  status: "Applied" | "Selected" | "Rejected" | "Withdrawn" | "Completed";
+  appliedAt: Date | null;
+  updatedAt: Date;
+
+  user: {
+    id: string;
+    name: string;
+    profile: {
+      gender: string | null;
+      language: string[] | null;
+      region: string | null;
+      background: string[] | null;
+      birth: Date | null;
+      avatarBase: string | null;
+      avatarAccessory: string | null;
+      avatarBg: string | null;
+    } | null;
+  };
+
+  // Criteria breakdown 直接丟前端，讓你畫 v / x / ? 或打開彈窗看細節
+  criteria: ReturnType<typeof evaluate>;
+
+  // 問卷部分（可能整個空，因為 allow no-form）
+  form: {
+    responseId: string | null;
+    submittedAt: Date | null;
+    totalScore: number; // 沒表單=0
+    manual: {
+      counts: { pass: number; fail: number; unsure: number; total: number };
+      answers: Array<{
+        answerId: string;
+        questionId: string;
+        questionText: string;
+        manualDecision: ManualDecision;
+        type: "text" | "single_choice" | "multiple_choice";
+        textAnswer?: string | null;
+        selectedOptions?: Array<{ id: string; text: string; score: number | null }>;
+      }>;
+    };
+    scored: {
+      answers: Array<{
+        answerId: string;
+        questionId: string;
+        questionText: string;
+        type: "single_choice" | "multiple_choice";
+        selectedOptions: Array<{ id: string; text: string; score: number | null }>;
+        questionScore: number; // 這一題加總
+      }>;
+    };
+    unscored: {
+      count: number;
+      answers: Array<{
+        answerId: string;
+        questionId: string;
+        questionText: string;
+        type: "text" | "single_choice" | "multiple_choice";
+        textAnswer?: string | null;
+        selectedOptions?: Array<{ id: string; text: string }>;
+      }>;
+    };
+  };
+};
+
+export async function listAppliedParticipants(slug: string): Promise<AppliedParticipantRow[]> {
   const study = await prisma.study.findUnique({
     where: { slug },
-    include: {
-      criteria: true,
+    select: {
+      id: true,
+      criteria: { select: { type: true, value: true, matchLevel: true } },
       participations: {
         where: { status: "Applied" },
+        orderBy: { appliedAt: "desc" },
         include: {
-          user: { include: { profile: true } },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              profile: {
+                select: {
+                  gender: true,
+                  language: true,
+                  region: true,
+                  background: true,
+                  birth: true,
+                  avatarBase: true,
+                  avatarAccessory: true,
+                  avatarBg: true,
+                },
+              },
+            },
+          },
           formResponses: {
+            orderBy: { submittedAt: "desc" },
+            take: 1,
             select: {
               id: true,
               submittedAt: true,
+              totalScore: true,
               answers: {
                 select: {
                   id: true,
                   text: true,
+                  manualDecision: true,
                   question: {
                     select: {
                       id: true,
                       text: true,
+                      type: true,
                       evaluationType: true,
                       options: { select: { id: true, text: true, score: true } },
                     },
@@ -405,53 +497,149 @@ export async function listAppliedParticipants(slug: string) {
   if (!study) throw new Error("Study not found");
 
   return study.participations.map((p) => {
-    const breakdown = evaluate(p.user.profile, study.criteria as Criterion[]);
+    const breakdown = evaluate(p.user.profile, study.criteria as unknown as Criterion[]);
 
-    const form = p.formResponses[0];
+    const resp = p.formResponses[0] ?? null;
+    const answers = resp?.answers ?? [];
 
-    const manualQuestions = [];
-    const scoredQuestions = [];
-    const unscoredQuestions = [];
-    let scoredQuestionsScore = 0;
+    // 分三類
+    const manualAnswers = answers.filter(a => a.question.evaluationType === "manual");
+    const scoredAnswers = answers.filter(a => a.question.evaluationType === "automatic");
+    const unscoredAnswers = answers.filter(a => a.question.evaluationType === "none");
 
-    if (form) {
-      for (const ans of form.answers) {
-        const q = ans.question;
+    // 手動審核計數
+    const manualCounts = {
+      pass: manualAnswers.filter(a => a.manualDecision === "Pass").length,
+      fail: manualAnswers.filter(a => a.manualDecision === "Fail").length,
+      unsure: manualAnswers.filter(a => a.manualDecision === "Unsure" || a.manualDecision === null).length,
+      total: manualAnswers.length,
+    };
 
-        if (q.evaluationType === "manual") {
-          manualQuestions.push(ans);
-        } else if (
-          q.options?.some((opt) => opt.score !== null && opt.score !== undefined)
-        ) {
-          scoredQuestions.push(ans);
-
-          // 計分題加總
-          const totalForThisAnswer = ans.selectedOptions.reduce((sum, sel) => {
-            return sum + (sel.option.score ?? 0);
-          }, 0);
-
-          scoredQuestionsScore += totalForThisAnswer;
-        } else {
-          unscoredQuestions.push(ans);
-        }
-      }
-    }
+    // 自動評分：以 response.totalScore 為主，沒有就用選項分數加總
+    const fallbackScore = scoredAnswers.reduce((sum, a) => {
+      const s = a.selectedOptions.reduce((s2, sel) => s2 + (sel.option.score ?? 0), 0);
+      return sum + s;
+    }, 0);
+    const totalScore = resp?.totalScore ?? fallbackScore;
 
     return {
       id: p.id,
-      status: p.status,
+      status: p.status as AppliedParticipantRow["status"],
       appliedAt: p.appliedAt,
       updatedAt: p.updatedAt,
-      user: p.user,
-      criteriaMatch: breakdown,
-      manualQuestions,
-      scoredQuestions,
-      scoredQuestionsScore,
-      unscoredQuestions,
+      user: {
+        id: p.user.id,
+        name: p.user.name,
+        profile: p.user.profile
+          ? {
+              gender: p.user.profile.gender ?? null,
+              language: p.user.profile.language ?? null,
+              region: p.user.profile.region ?? null,
+              background: p.user.profile.background ?? null,
+              birth: p.user.profile.birth ?? null,
+              avatarBase: p.user.profile.avatarBase ?? null,
+              avatarAccessory: p.user.profile.avatarAccessory ?? null,
+              avatarBg: p.user.profile.avatarBg ?? null,
+            }
+          : null,
+      },
+      criteria: breakdown,
+      form: {
+        responseId: resp?.id ?? null,
+        submittedAt: resp?.submittedAt ?? null,
+        totalScore,
+        manual: {
+          counts: manualCounts,
+          answers: manualAnswers.map(a => ({
+            answerId: a.id,
+            questionId: a.question.id,
+            questionText: a.question.text,
+            manualDecision: a.manualDecision as ManualDecision,
+            type: a.question.type,
+            textAnswer: a.text,
+            selectedOptions:
+              a.selectedOptions.length
+                ? a.selectedOptions.map(s => ({
+                    id: s.option.id,
+                    text: s.option.text,
+                    score: s.option.score,
+                  }))
+                : undefined,
+          })),
+        },
+        scored: {
+          answers: scoredAnswers.map(a => {
+            const selected = a.selectedOptions.map(s => ({
+              id: s.option.id,
+              text: s.option.text,
+              score: s.option.score,
+            }));
+            const qScore = selected.reduce((s, o) => s + (o.score ?? 0), 0);
+            return {
+              answerId: a.id,
+              questionId: a.question.id,
+              questionText: a.question.text,
+              type: a.question.type as "single_choice" | "multiple_choice",
+              selectedOptions: selected,
+              questionScore: qScore,
+            };
+          }),
+        },
+        unscored: {
+          count: unscoredAnswers.length,
+          answers: unscoredAnswers.map(a => ({
+            answerId: a.id,
+            questionId: a.question.id,
+            questionText: a.question.text,
+            type: a.question.type,
+            textAnswer: a.text ?? undefined,
+            selectedOptions:
+              a.selectedOptions.length
+                ? a.selectedOptions.map(s => ({ id: s.option.id, text: s.option.text }))
+                : undefined,
+          })),
+        },
+      },
     };
   });
 }
 
+export async function updateManualDecisions(input: {
+  participationId: string;
+  slug: string;
+  decisions: Array<{ answerId: string; decision: "Pass" | "Fail" | "Unsure" | null }>;
+}) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Unauthenticated");
+
+  // 找到 participation → studyId
+  const part = await prisma.participation.findUnique({
+    where: { id: input.participationId },
+    select: { studyId: true },
+  });
+  if (!part) throw new Error("Participation not found");
+
+  // 權限：必須是 owner/editor
+  const collab = await prisma.collaborator.findFirst({
+    where: { studyId: part.studyId, userId, role: { in: ["owner", "editor"] } },
+    select: { id: true },
+  });
+  if (!collab) throw new Error("Not allowed");
+
+  await prisma.$transaction(async (tx) => {
+    for (const d of input.decisions) {
+      await tx.formAnswer.update({
+        where: { id: d.answerId },
+        data: { manualDecision: d.decision },
+      });
+    }
+  });
+
+  revalidatePath(`/my-studies/view/${input.slug}/participant-progress`);
+
+  return { ok: true };
+}
 
 
 export type WorkflowStepDTO = {
@@ -1045,11 +1233,12 @@ export async function patchForm(slug: string, payload: any) {
         studyId: study.id,
         description: (data.description ?? "").trim() || null,
         questions: {
-          create: data.form.map((q) => ({
+          create: data.form.map((q, idx) => ({
             text: q.text,
             required: q.required,
             type: q.type,
             evaluationType: q.evaluationType,
+             order: idx + 1,           
             options: {
               create: (q.options ?? []).map((o) => ({
                 text: o.text,
@@ -1071,6 +1260,233 @@ export async function patchForm(slug: string, payload: any) {
   });
 }
 
+
+
+
+export type ApplyFormDTO = {
+  studyId: string;
+  slug: string;
+  studyName: string;
+  status: StudyStatus;
+  recruitmentStatus: RecruitmentStatus;
+  formId: string;
+  description: string | null;
+  questions: Array<{
+    order: number;
+    id: string;
+    text: string;
+    type: QuestionType;
+    required: boolean;
+    options?: Array<{ id: string; text: string }>;
+  }>;
+};
+
+
+export async function getApplyForm(slug: string): Promise<ApplyFormDTO | null> {
+  const study = await prisma.study.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      status: true,
+      recruitmentStatus: true,
+      form: {
+        select: {
+          id: true,
+          description: true,
+          questions: {
+            orderBy: { order: "asc" }, // 若你有 question.order，改成 { order: 'asc' }
+            select: {
+              id: true,
+              order: true,
+              text: true,
+              type: true,
+              required: true,
+              options: {
+                orderBy: { id: "asc" }, // 若你有 option.order，可改成 { order: 'asc' }
+                select: { id: true, text: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!study || !study.form || study.form.questions.length === 0) return null;
+
+  return {
+    studyId: study.id,
+    slug: study.slug,
+    studyName: study.name,
+    status: study.status,
+    recruitmentStatus: study.recruitmentStatus,
+    formId: study.form.id,
+    description: study.form.description,
+    questions: study.form.questions.map((q) => ({
+      order: q.order,
+      id: q.id,
+      text: q.text,
+      type: q.type,
+      required: q.required,
+      options: q.type === "text" ? undefined : q.options.map((o) => ({ id: o.id, text: o.text })),
+    })),
+  };
+}
+
+type ApplyAnswers = Record<string, string | string[]>;
+
+export async function applyToStudy(input: {
+  slug: string;
+  formId: string;
+  answers: ApplyAnswers;
+}) {
+  const { slug, formId, answers } = input;
+
+  // 1) 取使用者
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) redirect("/login");
+
+  // 2) 撈表單 + 研究狀態（需 ongoing/open）
+  const form = await prisma.form.findUnique({
+    where: { id: formId },
+    include: {
+      study: {
+        select: { id: true, slug: true, recruitmentStatus: true, status: true },
+      },
+      questions: { orderBy: { order: "asc" }, include: { options: true } },
+    },
+  });
+
+  if (!form || form.study.slug !== slug) {
+    redirect(`/recruitment/${slug}?error=Form%20not%20found`);
+  }
+  if (form.study.status !== "ongoing" || form.study.recruitmentStatus !== "open") {
+    redirect(`/recruitment/${slug}?error=Recruitment%20is%20not%20open`);
+  }
+
+  // 3) 若已申請：順便把 pending 邀請標記為 applied，然後導回
+  const dup = await prisma.participation.findFirst({
+    where: { userId, studyId: form.study.id },
+    select: { id: true },
+  });
+  if (dup) {
+    const pendingInv = await prisma.invitation.findFirst({
+      where: { studyId: form.study.id, userId, status: "pending" },
+      select: { id: true },
+    });
+    if (pendingInv) {
+      await prisma.invitation.update({
+        where: { id: pendingInv.id },
+        data: { status: "applied", respondedAt: new Date() },
+      });
+    }
+    revalidatePath(`/recruitment/${slug}`);
+    redirect(`/recruitment/${slug}?applied=1&dup=1`);
+  }
+
+  // 4) 建立 Participation / Response / Answers（交易）
+  try {
+    await prisma.$transaction(async (tx) => {
+      const participation = await tx.participation.create({
+        data: {
+          userId,
+          studyId: form.study.id,
+          status: "Applied",
+          appliedAt: new Date(), 
+        },
+      });
+
+      const response = await tx.formResponse.create({
+        data: {
+          participationId: participation.id,
+          formId: form.id,
+          submittedAt: new Date(),
+        },
+      });
+
+      let totalScore = 0;
+
+      for (const q of form.questions) {
+        const raw = answers[q.id];
+
+        if (q.type === "text") {
+          const val = typeof raw === "string" ? raw.trim() : "";
+          if (q.required && val === "") throw new Error("Please answer all required questions.");
+          await tx.formAnswer.create({
+            data: { responseId: response.id, questionId: q.id, text: val },
+          });
+          continue;
+        }
+
+        if (q.type === "single_choice") {
+          const selected = typeof raw === "string" ? raw : "";
+          if (q.required && !selected) throw new Error("Please answer all required questions.");
+          const opt = q.options.find((o) => o.id === selected);
+          if (!opt && selected) throw new Error("Invalid selection.");
+
+          const ans = await tx.formAnswer.create({
+            data: { responseId: response.id, questionId: q.id },
+          });
+
+          if (opt) {
+            await tx.formAnswerSelectedOption.create({
+              data: { answerId: ans.id, optionId: opt.id },
+            });
+            if (q.evaluationType === "automatic") totalScore += opt.score ?? 0;
+          }
+          continue;
+        }
+
+        // multiple_choice
+        const arr = Array.isArray(raw) ? raw : [];
+        if (q.required && arr.length === 0) throw new Error("Please select at least one option.");
+
+        const validOpts = q.options.filter((o) => arr.includes(o.id));
+
+        const ans = await tx.formAnswer.create({
+          data: { responseId: response.id, questionId: q.id },
+        });
+
+        if (validOpts.length) {
+          await tx.formAnswerSelectedOption.createMany({
+            data: validOpts.map((o) => ({ answerId: ans.id, optionId: o.id })),
+          });
+          if (q.evaluationType === "automatic") {
+            totalScore += validOpts.reduce((sum, o) => sum + (o.score ?? 0), 0);
+          }
+        }
+      }
+
+      // 寫回 totalScore（你已新增此欄位）
+      await tx.formResponse.update({
+        where: { id: response.id },
+        data: { totalScore },
+      });
+
+      // 在同一交易中處理 pending 邀請 → 標記為 applied
+      const inv = await tx.invitation.findFirst({
+        where: { studyId: form.study.id, userId, status: "pending" },
+        select: { id: true },
+      });
+      if (inv) {
+        await tx.invitation.update({
+          where: { id: inv.id },
+          data: { status: "applied", respondedAt: new Date() },
+        });
+      }
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Submit failed. Please try again.";
+    redirect(`/recruitment/${slug}?error=${encodeURIComponent(msg)}`);
+  }
+
+  // 5) 成功：revalidate + 導回
+  revalidatePath(`/recruitment/${slug}`);
+  redirect(`/recruitment/${slug}?applied=1`);
+}
 
 
 

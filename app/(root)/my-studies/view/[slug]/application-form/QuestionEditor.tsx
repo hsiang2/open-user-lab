@@ -93,9 +93,9 @@ export function QuestionEditor({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {Object.values(QuestionType).map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
-                  ))}
+                    <SelectItem value={QuestionType.text}>Text</SelectItem>
+                    <SelectItem value={QuestionType.single_choice}>Single choice</SelectItem>
+                    <SelectItem value={QuestionType.multiple_choice}>Multiple choice</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

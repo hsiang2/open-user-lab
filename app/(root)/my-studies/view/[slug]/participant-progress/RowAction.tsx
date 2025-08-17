@@ -27,12 +27,14 @@ export default function RowActions({ id }: { id: string }) {
         variant="destructive"
         disabled={isPending}
         onClick={() => run("Rejected", "reject")}
+        size="sm"
       >
         {isPending && which === "reject" ? "Processing..." : "Decline"}
       </Button>
       <Button
         disabled={isPending}
         onClick={() => run("Selected", "accept")}
+        size="sm"
       >
         {isPending && which === "accept" ? "Processing..." : "Accept"}
       </Button>

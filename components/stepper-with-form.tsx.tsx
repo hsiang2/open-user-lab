@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { createStudyFull } from "@/lib/actions/study.actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Textarea } from "./ui/textarea";
 
 export const formatOptions: Option[] = RECRUITMENT_FORMATS.map((item) => ({
     label: item,
@@ -191,11 +192,12 @@ const SessionForm = ({ showErrors }: Props) => {
           >
             Session Details (optional)
           </label>
-          <Input
+          <Textarea
             id={register("sessionDetail").name}
             {...register("sessionDetail")}
             className="block w-full rounded-md border p-2"
             placeholder="e.g. You’ll complete an online survey, then join a 30-minute interview on Teams."
+
           />
           {showErrors && errors.sessionDetail && (
             <span className="text-sm text-destructive">
@@ -212,7 +214,7 @@ const SessionForm = ({ showErrors }: Props) => {
           >
             Participant Criteria
           </label>
-          <Input
+          <Textarea
             id={register("criteriaDescription").name}
             {...register("criteriaDescription")}
             className="block w-full rounded-md border p-2"
@@ -941,8 +943,13 @@ const FormStepperComponent = () => {
         // onSubmit={form.handleSubmit(onSubmit)} 
          onSubmit={(e) => e.preventDefault()} // 不用原生 submit
           onKeyDown={(e) => {
-            // 任何欄位按 Enter，如果不是最後一步就擋掉
-            if (e.key === "Enter" && !methods.isLast) e.preventDefault();
+            if (
+            e.key === "Enter" &&
+            !(e.target instanceof HTMLTextAreaElement) && // 排除 textarea
+            !methods.isLast
+          ) {
+            e.preventDefault();
+          }
           }}
         className="space-y-4 flex flex-col items-center w-full"
       >

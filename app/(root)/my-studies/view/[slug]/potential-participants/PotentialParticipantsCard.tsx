@@ -28,7 +28,7 @@ function InviteSubmitButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-const CriteriaList = ({label, matched, mismatched, missing}: {label: string, matched: string[], mismatched: string[], missing: string[]}) => {
+export const CriteriaList = ({label, matched, mismatched, missing}: {label: string, matched: string[], mismatched: string[], missing: string[]}) => {
     const all = [
     ...matched.map(t => ({ type: t, icon: "match" })),
     ...mismatched.map(t => ({ type: t, icon: "mismatch" })),
@@ -39,7 +39,8 @@ const CriteriaList = ({label, matched, mismatched, missing}: {label: string, mat
         <div>
             <p className="text-body font-bold">{label}:</p>
             <ul className="pl-4">
-                {all.map((c, i) => (
+
+                {all.length ? all.map((c, i) => (
                 <li key={i}>
                     <div className="flex items-center justify-between">
                         <p className="text-body">{c.type}</p>
@@ -54,7 +55,9 @@ const CriteriaList = ({label, matched, mismatched, missing}: {label: string, mat
                     </div>
                     
                 </li>
-                ))}
+                )): 
+                <>-</>
+                }
             </ul>
         </div> 
     );

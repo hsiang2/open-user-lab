@@ -10,11 +10,21 @@ import InviteBanner from "./InviteBanner";
 import { ApplyButton } from "./ApplyButton";
 import Avatar from "@/components/shared/avatar/Avatar";
 import Link from "next/link";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle2Icon } from "lucide-react";
 
-const StudyDetailsRecruitmentPage = async (props: {
-    params: Promise<{ slug: string }>;
-}) => {
-    const { slug } = await props.params;
+type PageProps = {
+  params: { slug: string };
+  searchParams: Promise<{ applied?: string; dup?: string; error?: string }>;
+};
+
+const StudyDetailsRecruitmentPage = async ({ params, searchParams }: PageProps) => {
+     const { slug } = await params;            
+  const { applied, dup, error } = await searchParams; 
+
+   const isApplied = applied === "1";
+  const isDup = dup === "1";
+  const errorMsg = error ? decodeURIComponent(error) : "";
 
     const study = await getStudyForExplore(slug);
     if (!study) notFound();
@@ -43,6 +53,22 @@ const StudyDetailsRecruitmentPage = async (props: {
     
     return ( 
         <div className="flex flex-col flex-center">
+            {isApplied && (
+               
+                <Alert className="my-8 w-fit">
+                    <CheckCircle2Icon />
+                    <AlertTitle>{isDup ? "You already applied" : "Application submitted"}</AlertTitle>
+                    <AlertDescription>
+                        {isDup ? "Your previous application is on file." : "We’ve received your application."}
+                    </AlertDescription>
+                </Alert>
+            )}
+            {errorMsg && (
+                <Alert variant="destructive" className="my-8">
+                <AlertTitle>Submission failed</AlertTitle>
+                <AlertDescription>{errorMsg}</AlertDescription>
+                </Alert>
+            )}
             <h1 className="text-title mb-4">{study.name}</h1>
             <p className="text-body mb-4">{study.recruitment?.description}</p>
             { study.collaborators.map((c) => (
@@ -74,11 +100,15 @@ const StudyDetailsRecruitmentPage = async (props: {
                  <div className="space-y-8 max-w-xl w-full">
                     <div className="space-y-4">
                         <h2 className="text-subtitle">Participant Criteria</h2>
-                        <p className="text-body ">{study.recruitment?.criteriaDescription}</p>
+                        <p className="text-body whitespace-pre-line">{study.recruitment?.criteriaDescription}</p>
                     </div>
                    <div className="space-y-4">
                         <h2 className="text-subtitle">Format</h2>
-                        <p className="text-body">{study.recruitment?.format.join(' / ')}</p>
+                        <p className="text-body">
+                           {study.recruitment?.format
+                            ?.map((f) => (f === "Other" ? study.recruitment?.formatOther : f))
+                            .join(" / ")}
+                        </p>
                    </div>
                    <div className="space-y-4">
                         <h2 className="text-subtitle">Estimated Duration</h2>
@@ -87,7 +117,7 @@ const StudyDetailsRecruitmentPage = async (props: {
                    { study.recruitment?.sessionDetail && (
                         <div className="space-y-4">
                             <h2 className="text-subtitle">Session Details</h2>
-                            <p className="text-body">{study.recruitment?.sessionDetail}</p>
+                            <p className="text-body whitespace-pre-line">{study.recruitment?.sessionDetail}</p>
                         </div>
                    )
                    }
@@ -109,7 +139,6 @@ const StudyDetailsRecruitmentPage = async (props: {
                  <InviteBanner invitationId={pendingInvitation.id} />
                 </div>
             )}
-
             <div className="flex justify-center gap-2">
                 {/* TODO */}
                 <Button disabled={!(study.status==='ongoing')} variant="secondary" type="button">

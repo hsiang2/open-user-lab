@@ -23,7 +23,7 @@ export default async function StudyLayout({
             <div className="flex flex-col items-center my-8">
             <h1 className="text-title text-center max-w-[800px]">{study?.name}</h1>
             <StudyNav slug={slug} />
-            <div className="w-full max-w-[800px]">{children}</div>
+            <div className="w-full max-w-[900px]">{children}</div>
             </div>
         </StudyProvider>
     );
