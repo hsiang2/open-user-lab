@@ -6,7 +6,7 @@ import { auth } from '@/auth';
 import { StudyCreatePayload } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { fullRecruitmentSchema, recruitmentGoalSchema } from '../validators';
-import z from 'zod';
+import z, { includes } from 'zod';
 
 // Get latest study
 export async function getLatestStudies() {
@@ -53,11 +53,17 @@ export async function getMyStudies(userId: string) {
         },
       },
     },
-    // include: {
-    //   collaborators: true,
-    //   recruitment: true,
-    //   participations: true,
-    // },
+    include: {
+      // collaborators: true,
+      recruitment: {
+        select: {
+        image: true,
+        avatarAccessoryResearcher: true,
+        avatarBaseResearcher: true
+      }
+      },
+      // participations: true,
+    },
     orderBy: {
       createdAt: 'desc',
     },

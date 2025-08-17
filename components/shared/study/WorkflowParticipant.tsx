@@ -1,10 +1,13 @@
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import Image from "next/image";
 
 const WorkflowParticipant = (
     {order, name, done, noteParticipant, deadline} : {
     order: number; name: string; done: boolean; noteParticipant?: string | null; deadline?: string | null;
 }) => {
+    const isOverdue = deadline ? new Date(deadline) < new Date() : false;
     return (  
         <div className="flex justify-between items-center w-full md:w-[500px]">
             <div className="flex gap-5 items-center">
@@ -15,7 +18,9 @@ const WorkflowParticipant = (
                         <p className="text-body">{noteParticipant}</p>
                     )}  
                         {deadline && (
-                        <p className="text-body">{deadline}</p>
+                        <Badge variant={isOverdue ? "destructive" : "secondary"}>
+                        {format(new Date(deadline), "PPP")}
+                        </Badge>
                     )}  
                 </div>
             </div>

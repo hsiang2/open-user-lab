@@ -19,7 +19,7 @@ const toFormValues = (study: any): FormValues => ({
 });
 
 const StudyRecruitmentSettingPage = () => {
-    const study = useStudy();
+    const {study} = useStudy();
     const initial = toFormValues(study);
    
     // const getUserAvatar

@@ -1,6 +1,6 @@
 'use client'
 
-import { useStudy } from "../StudyProviderClient";
+import { Status, Step, useStudy } from "../StudyProviderClient";
 import { StatusActionDialog } from "@/components/shared/study/StatusActionDialog";
 import Avatar from "@/components/shared/avatar/Avatar";
 import { useRouter } from "next/navigation";
@@ -8,9 +8,11 @@ import { useTransition } from "react";
 import { deleteStudy, endStudy, goLive, pauseRecruitment, resumeRecruitment } from "@/lib/actions/study.actions";
 import { Button } from "@/components/ui/button";
 import { RecruitmentGoal } from "./RecruitmentGoal";
+import StudyWorkflow from "./StudyWorkflow";
 
 const StudyOverviewPage = () => {
-    const study = useStudy();
+    // const study = useStudy();
+          const {study, workflow} = useStudy();
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
@@ -22,12 +24,12 @@ const StudyOverviewPage = () => {
 
     // const getUserAvatar
     return (
-        <div className="p-4 flex flex-col items-center space-y-10 justify-center md:flex-row md:space-x-15 md:space-y-0 md:items-start flex-wrap">
+        <div className="py-4 px-7 flex flex-col items-center space-y-10 justify-center md:flex-row md:space-x-15 md:space-y-0 md:items-start flex-wrap">
 
             <div className="min-w-full flex flex-col flex-center space-y-10 mb-15 mr-0">
                 <h2 className="text-subtitle">Study Workflow</h2>
                 <div>
-                     TODO (workflow)
+                    <StudyWorkflow studyId={workflow.studyId} statuses={workflow.statuses} steps={workflow.steps} />
                 </div>
                
             </div>
@@ -88,16 +90,16 @@ const StudyOverviewPage = () => {
             
             
             <div className="flex flex-col space-y-10 basis-0 grow min-w-0">
-                <div className="flex flex-col space-y-10">
+                <div className="flex flex-col space-y-8">
                     <h2 className="text-subtitle">Description</h2>
                     <p className="text-body">{study.description}</p>
                     <Button variant="secondary" className="w-fit">
-                        {/* <Link href='/profile/edit-profile'> */}
-                            TODO (Edit)
+                        {/* TODO <Link href='/profile/edit-profile'> */}
+                             Edit
                         {/* </Link> */}
                     </Button>
                 </div>
-                <div className="flex flex-col space-y-10">
+                <div className="flex flex-col space-y-8">
                     <h2 className="text-subtitle">Collaborators</h2>
                     { study.collaborators.map((c: any) => (
                         <div key={c.id} className="flex items-center justify-between">
@@ -111,8 +113,8 @@ const StudyOverviewPage = () => {
                     ))
                     }
                     <Button variant="secondary" className="w-fit">
-                        {/* <Link href='/profile/edit-profile'> */}
-                            TODO (Edit Collaborators)
+                        {/* TODO <Link href='/profile/edit-profile'> */}
+                            Edit
                         {/* </Link> */}
                     </Button>
                 </div>

@@ -2,6 +2,7 @@ import { getStudyForResearcher } from "@/lib/actions/study.actions";
 import StudyNav from "./StudyNav";
 import { StudyProvider } from "./StudyProviderClient";
 import { redirect } from "next/navigation";
+import { getStudyWorkflowForSlug } from "@/lib/actions/participation.actions";
 
 export default async function StudyLayout({
   children,
@@ -18,8 +19,10 @@ export default async function StudyLayout({
     }
     const study = JSON.parse(JSON.stringify(studyRaw));
 
+     const wf = await getStudyWorkflowForSlug(slug); 
+
     return (
-        <StudyProvider study={study} slug={slug}>
+        <StudyProvider study={study} slug={slug} workflow={wf}>
             <div className="flex flex-col items-center my-8">
             <h1 className="text-title text-center max-w-[800px]">{study?.name}</h1>
             <StudyNav slug={slug} />

@@ -12,7 +12,7 @@ import { useStudy } from "../StudyProviderClient";
 import { patchRecruitmentGoal } from "@/lib/actions/study.actions";
 
 export function RecruitmentGoal({ slug }: { slug: string }) {
-  const study = useStudy();
+  const {study} = useStudy();
   const base = study?.recruitment ?? null;
 
   const [enabledSelected, setEnabledSelected] = useState(base?.autoCloseSelectedCount != null);

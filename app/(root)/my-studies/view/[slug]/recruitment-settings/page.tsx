@@ -4,7 +4,7 @@ import { useStudy } from "../StudyProviderClient";
 import { RecruitmentForm } from "./RecruitmentForm";
 
 const StudyRecruitmentSettingPage = () => {
-    const study = useStudy();
+    const {study} = useStudy();
    
     // const getUserAvatar
     return (

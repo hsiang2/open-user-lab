@@ -792,6 +792,8 @@ export async function listSelectedWithWorkflow(slug: string): Promise<{
 }
 
 
+
+
 export async function setParticipantStepStatus(params: {
   participationId: string;
   stepId: string;
@@ -826,6 +828,139 @@ export async function setParticipantStepStatus(params: {
       },
     });
   }
+
+  return { ok: true };
+}
+
+
+export type StudyStepDTO = {
+  id: string;
+  name: string;
+  order: number;
+  note: string | null;
+  deadline: string | null; // ISO
+};
+
+export type StudyStepStatusDTO = {
+  stepId: string;
+  status: "todo" | "completed";
+};
+export async function getStudyWorkflowForSlug(slug: string): Promise<{
+  studyId: string;
+  steps: StudyStepDTO[];
+  statuses: StudyStepStatusDTO[];
+}> {
+  const study = await prisma.study.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      studyWorkflow: {
+        include: {
+          steps: { orderBy: { order: "asc" } },
+        },
+      },
+    },
+  });
+
+  if (!study) throw new Error("Study not found");
+
+  // 可能還沒建立 studyWorkflow → 回傳空
+  if (!study.studyWorkflow) {
+    return { studyId: study.id, steps: [], statuses: [] };
+  }
+
+  const steps = study.studyWorkflow.steps.map<StudyStepDTO>((s) => ({
+    id: s.id,
+    order: s.order,
+    name: s.name,
+    note: s.note ?? null,
+    deadline: s.deadline ? s.deadline.toISOString() : null,
+  }));
+
+  // 取現有狀態
+  const existed = await prisma.studyWorkflowStepStatus.findMany({
+    where: { studyId: study.id },
+    select: { stepId: true, status: true },
+  });
+  const existedMap = new Map(existed.map((x) => [x.stepId, x.status]));
+
+  // 找出缺的狀態 → 建立為 todo
+  const missing = steps.filter((s) => !existedMap.has(s.id));
+  if (missing.length) {
+    await prisma.studyWorkflowStepStatus.createMany({
+      data: missing.map((m) => ({
+        studyId: study.id,
+        stepId: m.id,
+        status: "todo",
+        completedAt: null,
+      })),
+    });
+  }
+
+  // 重新組合（保證每個 step 都有一筆）
+  const statuses: StudyStepStatusDTO[] = steps.map((s) => ({
+    stepId: s.id,
+    status: (existedMap.get(s.id) ?? "todo") as "todo" | "completed",
+  }));
+
+  return { studyId: study.id, steps, statuses };
+}
+
+
+// 切換 study workflow 的步驟狀態
+export async function setStudyStepStatus(input: {
+  studyId: string;
+  stepId: string;
+  status: "todo" | "completed";
+  revalidateTo?: string; // e.g. `/recruitment/[slug]`
+}) {
+  "use server"; // ← 如果要在 client 直接 import 這個函式呼叫，務必加在函式內
+
+  const { studyId, stepId, status, revalidateTo } = input;
+
+  // 1) 認證
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Unauthenticated");
+
+  // 2) 權限：owner/editor 才能改
+  const collab = await prisma.collaborator.findFirst({
+    where: { studyId, userId, role: { in: ["owner", "editor"] } },
+    select: { id: true },
+  });
+  if (!collab) throw new Error("Not allowed");
+
+  // 3) 防呆：確認 stepId 屬於此 study 的 workflow
+  const step = await prisma.studyWorkflowStep.findUnique({
+    where: { id: stepId },
+    select: { workflow: { select: { studyId: true } } },
+  });
+  if (!step || step.workflow.studyId !== studyId) {
+    throw new Error("Invalid step");
+  }
+
+  // 4) upsert（無複合 unique 的情況下：先查再決定 update/create）
+  const existing = await prisma.studyWorkflowStepStatus.findFirst({
+    where: { stepId, studyId },
+    select: { id: true },
+  });
+
+  const now = new Date();
+  const completedAt = status === "completed" ? now : null;
+
+  if (existing) {
+    await prisma.studyWorkflowStepStatus.update({
+      where: { id: existing.id }, // 只能用唯一鍵 id
+      data: { status, completedAt },
+    });
+  } else {
+    await prisma.studyWorkflowStepStatus.create({
+      data: { studyId, stepId, status, completedAt },
+    });
+  }
+
+  if (revalidateTo) revalidatePath(revalidateTo);
 
   return { ok: true };
 }

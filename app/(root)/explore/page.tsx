@@ -7,7 +7,7 @@ const ExplorePage = async() => {
 
     return (
         <>
-          <StudyList data={latestStudies} type="explore" />
+          <StudyList data={latestStudies as any} type="explore" />
         </>
       );
   }

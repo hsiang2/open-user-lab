@@ -9,7 +9,8 @@ import { differenceInYears } from "date-fns";
 import { Landmark, Mail } from "lucide-react";
 import Link from "next/link";
 import Wall from "./Wall";
-import { getThankYouCertificates } from "@/lib/actions/study.actions";
+import { getMyStudies, getThankYouCertificates } from "@/lib/actions/study.actions";
+import StudyList from "@/components/shared/study/studyList";
 
 const ProfilePage = async (props: {
     params: Promise<{
@@ -42,7 +43,11 @@ const ProfilePage = async (props: {
          processedBackground = profile.background.map(item =>
             item === "Other" ? bgOther : item
         );
-    }
+    } 
+
+     const rawStudies = await getMyStudies(id);
+    
+    const studies = rawStudies.filter(s => s.status !== 'draft');
 
 
     return (
@@ -174,7 +179,10 @@ const ProfilePage = async (props: {
                 <TabsContent value="participation" className="w-full p-4">
                     <Wall certificates={certificates} />
                 </TabsContent>
-                <TabsContent value="studies">
+                <TabsContent value="studies" className="w-full p-4">
+                    <div className="bg-[#FCF2E0] rounded-md w-full min-h-[200px] p-8">
+                        <StudyList data={studies as any} type="explore" />
+                    </div>
                     
                 </TabsContent>
                 </Tabs>
