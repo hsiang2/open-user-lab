@@ -6,7 +6,6 @@ import { AVATAR_ACCESSORY_KEYS, AVATAR_STYLE, STUDY_IMAGE } from "@/lib/constant
 import { format } from "date-fns";
 
 const CertificateCard = ({ certificate }: { certificate: Certificate }) => {
-    console.log(certificate)
     return ( 
         <Card 
         // className="w-full max-w-sm"

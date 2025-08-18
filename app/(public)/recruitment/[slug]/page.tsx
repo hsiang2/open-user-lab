@@ -4,7 +4,7 @@ import StudyImage from "@/components/shared/image/StudyImage";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/db/prisma";
 import { getStudyForExplore } from "@/lib/actions/study.actions";
-import { AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE, STUDY_IMAGE } from "@/lib/constants";
+import { AVATAR_ACCESSORY_KEYS, AVATAR_STYLE, STUDY_IMAGE } from "@/lib/constants";
 import { notFound } from "next/navigation";
 import InviteBanner from "./InviteBanner";
 import { ApplyButton } from "./ApplyButton";
@@ -13,6 +13,8 @@ import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2Icon } from "lucide-react";
 import { PageProps } from "@/types/next-helper";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CopyLinkButton } from "./CopyLinkButton";
 
 // type PageProps = {
 //   params: { slug: string };
@@ -147,13 +149,27 @@ const StudyDetailsRecruitmentPage = async (
                 </div>
             )}
             <div className="flex justify-center gap-2">
-                {/* TODO */}
-                <Button disabled={!(study.status==='ongoing')} variant="secondary" type="button">
-                    Share
-                </Button>
-                <Button disabled={!userId || !(study.status==='ongoing')} variant="secondary" type="button">
+               
+                 <Dialog>
+                    <DialogTrigger  asChild>
+                        <Button disabled={!(study.status==='ongoing')} variant="secondary">
+                            Share
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                        <DialogTitle>Share This Study</DialogTitle>
+                        
+                        </DialogHeader>
+                        <div className="my-10 w-full px-3">
+                            <CopyLinkButton />
+                        </div>
+                    </DialogContent>
+                </Dialog>
+                 {/* TODO */}
+                {/* <Button disabled={!userId || !(study.status==='ongoing')} variant="secondary" type="button">
                     Save
-                </Button>
+                </Button> */}
                 <ApplyButton slug={slug} disabled={!userId || (study.recruitmentStatus === 'closed') || !!existingParticipation} />
             </div>
         </div>
