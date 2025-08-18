@@ -7,6 +7,7 @@ import { StudyCreatePayload } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { fullRecruitmentSchema, recruitmentGoalSchema } from '../validators';
 import z, { includes } from 'zod';
+import { STUDY_CARD_SELECT } from '@/contracts/study';
 
 // Get latest study
 export async function getLatestStudies() {
@@ -17,28 +18,29 @@ export async function getLatestStudies() {
     },
         take: LATEST_STUDIES_LIMIT,
         orderBy: { createdAt: 'desc' },
-        include: {
-          collaborators: {
-              select: {
-                id: true,
-                role: true,
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    profile: {
-                      select: {
-                        avatarBase: true,
-                        avatarAccessory: true,
-                        avatarBg: true,
-                      },
-                    },
-                  },
-                }
-              }
-            },
-          recruitment: true,
-        },
+        select: STUDY_CARD_SELECT,
+        // include: {
+        //   collaborators: {
+        //       select: {
+        //         id: true,
+        //         role: true,
+        //         user: {
+        //           select: {
+        //             id: true,
+        //             name: true,
+        //             profile: {
+        //               select: {
+        //                 avatarBase: true,
+        //                 avatarAccessory: true,
+        //                 avatarBg: true,
+        //               },
+        //             },
+        //           },
+        //         }
+        //       }
+        //     },
+        //   recruitment: true,
+        // },
     })
     
     return data
@@ -53,17 +55,12 @@ export async function getMyStudies(userId: string) {
         },
       },
     },
-    include: {
-      // collaborators: true,
-      recruitment: {
-        select: {
-        image: true,
-        avatarAccessoryResearcher: true,
-        avatarBaseResearcher: true
-      }
-      },
-      // participations: true,
-    },
+    select: STUDY_CARD_SELECT,
+    // include: {
+    //   // collaborators: true,
+    //   recruitment: true,
+    //   // participations: true,
+    // },
     orderBy: {
       createdAt: 'desc',
     },

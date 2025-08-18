@@ -29,19 +29,19 @@ const MyParticipationPage = async () => {
               <TabsTrigger value="ended">Ended</TabsTrigger>
           </TabsList>
           <TabsContent value="participating" className="w-full p-4">
-            <StudyList data={participating as any} type="participant" />
+            <StudyList data={participating} type="participant" />
           </TabsContent>
 
           <TabsContent value="invitations" className="w-full p-4">
-            <StudyList data={invitations as any} type="explore" />
+            <StudyList data={invitations} type="explore" />
           </TabsContent>
 
           <TabsContent value="pending" className="w-full p-4">
-            <StudyList data={pending as any} type="explore" />
+            <StudyList data={pending} type="explore" />
           </TabsContent>
 
           <TabsContent value="ended" className="w-full p-4">
-            <StudyList data={ended as any} type="participant" />
+            <StudyList data={ended} type="participant" />
           </TabsContent>
           </Tabs>
       </div>

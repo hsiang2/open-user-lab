@@ -9,60 +9,6 @@ import { normalizedFormSchema } from "../validators";
 import { revalidatePath } from "next/cache";import { redirect } from "next/navigation";
 ;
 
-// function getProfileValue(profile: any, type: string): unknown {
-//   switch (type) {
-//     case "gender": return profile?.gender ?? null;
-//     case "language": return profile?.language ?? [];
-//     case "region": return profile?.region ?? null;
-//     case "background": return profile?.background ?? [];
-//     case "birth": return profile?.birth ?? null;
-//     default: return null;
-//   }
-// }
-
-// function match(type: string, wanted: string[], profileVal: unknown): boolean {
-//   if (isPreferNotToSay(profileVal)) return false;
-
-//   if (type === "language" || type === "background") {
-//     const have = Array.isArray(profileVal) ? profileVal : [];
-//     return have.some((x) => wanted.includes(String(x)));
-//   }
-
-//   if (type === "gender" || type === "region") {
-//     return wanted.includes(String(profileVal));
-//   }
-
-//   if (type === "birth") {
-//     const birth = profileVal instanceof Date ? profileVal : null;
-//     if (!birth) return false;
-
-//     // 陣列格式 [min, max]，轉成數字
-//     const [minStr, maxStr] = wanted;
-//     const min = Number(minStr);
-//     const max = Number(maxStr);
-
-//     // 如果 min/max 無法轉成合法數字，就不限制
-//     if (isNaN(min) || isNaN(max)) return true;
-
-//     const now = new Date();
-//     const age =
-//         now.getFullYear() -
-//         birth.getFullYear() -
-//         (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate()) ? 1 : 0);
-
-//     return age >= min && age <= max;
-//     }
-
-//   // 其他未定義的類型先視為通過
-//   return true;
-// }
-
-// function isPreferNotToSay(v: unknown) {
-//   if (v == null) return true;
-//   if (Array.isArray(v)) return v.length === 0;
-//   if (typeof v === "string") return v.trim().toLowerCase() === "prefer not to say";
-//   return false;
-// }
 export async function checkStudyEligibility(slug: string): Promise<CheckResult> {
   const session = await auth();
   const userId = session?.user?.id;

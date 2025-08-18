@@ -27,13 +27,13 @@ const MyStudiesPage = async () => {
               <TabsTrigger value="ended">Ended</TabsTrigger>
           </TabsList>
           <TabsContent value="ongoing" className="w-full p-4">
-              <StudyList data={ongoing as any} type="researcher" />
+              <StudyList data={ongoing} type="researcher" />
           </TabsContent>
           <TabsContent value="draft"  className="w-full p-4">
-              <StudyList data={draft as any} type="researcher" />
+              <StudyList data={draft} type="researcher" />
           </TabsContent>
           <TabsContent value="ended" className="w-full p-4">
-              <StudyList data={ended as any} type="researcher" />
+              <StudyList data={ended} type="researcher" />
           </TabsContent>
           </Tabs>
           <Button>

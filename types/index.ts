@@ -1,4 +1,16 @@
-import { avatarSchema, createStudyFullSchema, criteriaUiSchema, formSchema, fullRecruitmentSchema, insertCriteria, insertParticipantWorkflowStep, insertRecruitmentSchema, insertStudySchema, insertStudyWorkflowStep, normalizedFormSchema, optionInputSchema, questionSchema, recruitmentGoalSchema, userProfileSchema } from '@/lib/validators'
+import { 
+  avatarSchema, 
+  createStudyFullSchema, 
+  criteriaUiSchema, 
+  formSchema, 
+  fullRecruitmentSchema, 
+  insertCriteria, 
+  insertParticipantWorkflowStep, 
+  insertStudySchema, insertStudyWorkflowStep, 
+  normalizedFormSchema, 
+  optionInputSchema, 
+  questionSchema, 
+  userProfileSchema } from '@/lib/validators'
 import { z } from 'zod'
 
 export type Study = z.infer<typeof insertStudySchema> & {
@@ -12,7 +24,7 @@ export type Study = z.infer<typeof insertStudySchema> & {
     // participantWorkflow?:  ParticipantWorkflow;
     // studyWorkflow?:        StudyWorkflow;
     // criteria:              Criteria[];
-    recruitment?:           RecruitmentFormValues;
+    recruitment?:           RecruitmentFormValues | null;
     // form?:                  Form;
     // StudySaved: StudySaved[];
 };

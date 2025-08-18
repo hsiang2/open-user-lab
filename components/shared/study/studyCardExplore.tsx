@@ -1,22 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Study } from "@/types";
 import Link from "next/link";
 import StudyImage from "../image/StudyImage";
 import { AVATAR_ACCESSORY_KEYS, AVATAR_STYLE, STUDY_IMAGE } from "@/lib/constants";
+import { StudyCard } from "@/contracts/study";
 
-const StudyCardExplore = ({ study }: { study: Study }) => {
+const StudyCardExplore = ({ study }: { study: StudyCard }) => {
     return ( 
-        <Card 
-        // className="w-full max-w-sm"
-        >
+        <Card >
             <CardHeader >
                 <Link href={`/recruitment/${study.slug}`}>
                     <h2 className="text-subtitle text-center">{study.name}</h2>
                 </Link>
             </CardHeader>
             <CardContent>
-                {/* <div className="flex flex-col"> */}
                 <div className="flex flex-col flex-center">
                     <StudyImage 
                         width={250} 
@@ -24,14 +21,12 @@ const StudyCardExplore = ({ study }: { study: Study }) => {
                         styleResearcher= {study.recruitment?.avatarBaseResearcher  as (typeof AVATAR_STYLE)[number] } 
                         accessoryResearcher= {study.recruitment?.avatarAccessoryResearcher as (typeof AVATAR_ACCESSORY_KEYS)[number] } 
                     />
-<Button asChild>
-                    <Link href={`/recruitment/${study.slug}`}>
-                        View
-                    </Link>
-                </Button>
-
+                    <Button asChild>
+                        <Link href={`/recruitment/${study.slug}`}>
+                            View
+                        </Link>
+                    </Button>
                 </div>
-                
             </CardContent>
         </Card>
     );

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE, BACKGROUND_CATEGORIES, GENDERS, LANGUAGES, RECRUITMENT_FORMATS, REGIONS } from "./constants";
+import { AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE, BACKGROUND_CATEGORIES, GENDERS, LANGUAGES, RECRUITMENT_FORMATS, REGIONS, STUDY_IMAGE } from "./constants";
 import { CriteriaMatchLevel, EvaluationType, ProfileField, QuestionType } from "@prisma/client";
 
 // Schema for inserting studies
@@ -25,12 +25,12 @@ export const fullRecruitmentSchema = insertRecruitmentSchema.extend({
     .string()
     .min(1, 'Description is required')
     .max(2000, 'Description must be 2000 characters or fewer'),
-  image: z.string().min(1, 'Image is required'),
+  image: z.enum(STUDY_IMAGE),
   thankYouMessage: z
     .string()
     .max(2000, 'Thank you message must be 2000 characters or fewer'),
-  avatarBaseResearcher: z.string().nullable().optional(),
-  avatarAccessoryResearcher:  z.string().nullable().optional(),
+  avatarBaseResearcher: z.enum(AVATAR_STYLE).nullable().optional(),
+  avatarAccessoryResearcher:  z.enum(AVATAR_ACCESSORY_KEYS).nullable().optional(),
 });
 
 export const insertCriteria = z.object({

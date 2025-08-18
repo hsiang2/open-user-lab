@@ -1,8 +1,8 @@
-// lib/actions/my-participation.list.ts
 "use server";
 import { prisma } from "@/db/prisma";
 import { auth } from "@/auth";
 import type { StepStatus } from "@prisma/client";
+import { STUDY_CARD_SELECT } from "@/contracts/study";
 
 
 async function requireUserId() {
@@ -21,8 +21,7 @@ export async function listMyParticipatingStudies() {
     orderBy: { updatedAt: "desc" },
     include: {
       study: {
-        // 想精簡可拿掉 include，或只挑卡片要用的欄位
-        include: { recruitment: true },
+         select: STUDY_CARD_SELECT,
       },
     },
   });
@@ -39,7 +38,7 @@ export async function listMyPendingStudies() {
     orderBy: { appliedAt: "desc" },
     include: {
       study: {
-        include: { recruitment: true },
+         select: STUDY_CARD_SELECT,
       },
     },
   });
@@ -56,7 +55,7 @@ export async function listMyInvitationStudies() {
     orderBy: { createdAt: "desc" },
     include: {
       study: {
-        include: { recruitment: true },
+         select: STUDY_CARD_SELECT,
       },
     },
   });
@@ -76,7 +75,7 @@ export async function listMyEndedStudies() {
     orderBy: { updatedAt: "desc" },
     include: {
       study: {
-        include: { recruitment: true },
+         select: STUDY_CARD_SELECT,
       },
     },
   });
@@ -86,8 +85,6 @@ export async function listMyEndedStudies() {
 
 
 // detail
-
-
 export async function getMyParticipationDetailBySlug(slug: string) {
   const userId = await requireUserId();
 
