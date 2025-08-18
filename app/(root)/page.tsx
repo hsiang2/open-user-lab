@@ -14,7 +14,7 @@ const HomePage = async () => {
     } 
   }
 
-  return <>LandingPage</>;
+  redirect("/explore");
 }
    
 export default HomePage;
