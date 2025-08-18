@@ -1,9 +1,10 @@
-import { listSelectedWithWorkflow } from "@/lib/actions/participation.actions";
+
+import { listSelectedParticipantProgress } from "@/lib/actions/participation.actions";
 import SelectedTableClient from "./SelectedTableClient";
 
 export default async function SelectedParticipants({ slug }: { slug: string }) {
-  const { steps, rows } = await listSelectedWithWorkflow(slug);
-  return <SelectedTableClient steps={steps} rows={rows} />;
+  const { steps, progress } = await listSelectedParticipantProgress(slug);
+  return <SelectedTableClient steps={steps} rows={progress} />;
 }
 
 

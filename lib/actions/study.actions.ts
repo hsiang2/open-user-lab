@@ -7,10 +7,10 @@ import { StudyCreatePayload } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { fullRecruitmentSchema, recruitmentGoalSchema } from '../validators';
 import z, { includes } from 'zod';
-import { STUDY_CARD_SELECT } from '@/contracts/study';
+import { STUDY_CARD_SELECT, STUDY_FOR_RESEARCHER_INCLUDE, StudyCard, StudyForResearcher } from '@/contracts/study';
 
 // Get latest study
-export async function getLatestStudies() {
+export async function getLatestStudies():Promise<StudyCard[]>  {
     const data = await prisma.study.findMany({
       where: {
       status: 'ongoing', 
@@ -46,7 +46,7 @@ export async function getLatestStudies() {
     return data
 }
 
-export async function getMyStudies(userId: string) {
+export async function getMyStudies(userId: string):Promise<StudyCard[]>  {
   return await prisma.study.findMany({
     where: {
       collaborators: {
@@ -68,43 +68,44 @@ export async function getMyStudies(userId: string) {
 }
 
 //Get study by slug 
-export async function getStudyForResearcher(slug: string) {
+export async function getStudyForResearcher(slug: string): Promise<StudyForResearcher | null>  {
     return await prisma.study.findFirst({
         where: { slug: slug },
-        include: {
-            collaborators: {
-              select: {
-                id: true,
-                role: true,
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    profile: {
-                      select: {
-                        avatarBase: true,
-                        avatarAccessory: true,
-                        avatarBg: true,
-                      },
-                    },
-                  },
-                }
-              }
-            },
-            participations: true,
-            participantSaved: true,
-            participantWorkflow: { include: { steps: true } },
-            studyWorkflow: { include: { steps: true } },
-            criteria: true,
-            recruitment: true,
-            form: {
-              include: {
-                questions: {
-                  include: { options: true },
-                },
-              },
-            },
-          },
+        include: STUDY_FOR_RESEARCHER_INCLUDE,
+        // include: {
+        //     collaborators: {
+        //       select: {
+        //         id: true,
+        //         role: true,
+        //         user: {
+        //           select: {
+        //             id: true,
+        //             name: true,
+        //             profile: {
+        //               select: {
+        //                 avatarBase: true,
+        //                 avatarAccessory: true,
+        //                 avatarBg: true,
+        //               },
+        //             },
+        //           },
+        //         }
+        //       }
+        //     },
+        //     participations: true,
+        //     participantSaved: true,
+        //     participantWorkflow: { include: { steps: true } },
+        //     studyWorkflow: { include: { steps: true } },
+        //     criteria: true,
+        //     recruitment: true,
+        //     form: {
+        //       include: {
+        //         questions: {
+        //           include: { options: true },
+        //         },
+        //       },
+        //     },
+        //   },
     })
 }
 

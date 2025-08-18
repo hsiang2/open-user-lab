@@ -24,20 +24,11 @@ export default async function MyParticipationDetailPage({ params }: { params: { 
               <TabsContent value="progress" className="mt-4">
                 {/* 這裡畫 chips/steps，或用你之前的 SelectedTableClient 簡化版 */}
                 <div className="flex flex-col gap-10 my-8">
-                  {data.progress.steps.map((st, i) => {
+                  {data.progress.steps.map((st) => {
                     const s = data.progress.statuses.find(x => x.stepId === st.id);
                     const done = s?.status === "completed";
                     return (
                       <WorkflowParticipant key={st.id} order={st.order} name={st.name} done={done} noteParticipant={st.noteParticipant} deadline={st.deadline} />
-                      // <div
-                      //   key={st.id}
-                      //   className={`px-3 py-1 rounded-full text-sm border ${
-                      //     done ? "bg-green-100 border-green-200" : "bg-muted border-muted-foreground/20"
-                      //   }`}
-                      //   title={st.noteParticipant ?? undefined}
-                      // >
-                      //   {i + 1}. {st.name}
-                      // </div>
                     );
                   })}
                 </div>
@@ -53,9 +44,9 @@ export default async function MyParticipationDetailPage({ params }: { params: { 
                               <div  className="flex space-x-4 items-center min-w-0">
                                   <div className="flex-shrink-0">
                                       <Avatar width={50} 
-                                      background={c.user.profile?.avatarBg as typeof AVATAR_BACKGROUND[number]} 
-                                      style={c.user.profile?.avatarBase as typeof AVATAR_STYLE[number]} 
-                                      accessory={c.user.profile?.avatarAccessory as typeof AVATAR_ACCESSORY_KEYS[number] | null} 
+                                      background={c.user.profile?.avatarBg} 
+                                      style={c.user.profile?.avatarBase} 
+                                      accessory={c.user.profile?.avatarAccessory} 
                                       />
                                   </div>
                                   <p className="text-body font-bold truncate min-w-0">{c.user.name}</p>

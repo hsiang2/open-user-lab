@@ -1,7 +1,6 @@
-import { Button } from "@/components/ui/button";
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Certificate, Study } from "@/types";
-import Link from "next/link";
+import { Certificate } from "@/types";
 import StudyImage from "../image/StudyImage";
 import { AVATAR_ACCESSORY_KEYS, AVATAR_STYLE, STUDY_IMAGE } from "@/lib/constants";
 import { format } from "date-fns";

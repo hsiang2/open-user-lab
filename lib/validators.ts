@@ -99,7 +99,7 @@ export const createStudyFullSchema = insertStudySchema
   .and(
     z.object({
       criteria: criteriaUiSchema,
-      participantSteps: z.array(insertParticipantWorkflowStep).default([]),
+      participantSteps: z.array(insertParticipantWorkflowStep).min(1, "Please add at least one participant step"),
       studySteps: z.array(insertStudyWorkflowStep).default([]),
 
 

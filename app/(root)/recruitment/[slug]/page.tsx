@@ -77,9 +77,9 @@ const StudyDetailsRecruitmentPage = async ({ params, searchParams }: PageProps) 
                         <div  className="flex space-x-4 items-center min-w-0">
                             <div className="flex-shrink-0">
                                 <Avatar width={50} 
-                                background={c.user.profile?.avatarBg as typeof AVATAR_BACKGROUND[number]} 
-                                style={c.user.profile?.avatarBase as typeof AVATAR_STYLE[number]} 
-                                accessory={c.user.profile?.avatarAccessory as typeof AVATAR_ACCESSORY_KEYS[number] | null} 
+                                background={c.user.profile?.avatarBg} 
+                                style={c.user.profile?.avatarBase} 
+                                accessory={c.user.profile?.avatarAccessory} 
                                 />
                             </div>
                             <p className="text-body font-bold truncate min-w-0">{c.user.name}</p>

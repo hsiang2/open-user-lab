@@ -3,15 +3,16 @@
 import { FormValues } from "@/types";
 import { useStudy } from "../StudyProviderClient";
 import { ApplicationSettingForm } from "./ApplicationSettingForm";
+import { StudyForResearcher } from "@/contracts/study";
 
-const toFormValues = (study: any): FormValues => ({
+const toFormValues = (study: StudyForResearcher): FormValues => ({
   description: study.form?.description ?? "",
-  form: (study.form?.questions ?? []).map((q: any) => ({
+  form: (study.form?.questions ?? []).map((q) => ({
     text: q.text,
     required: q.required,
     type: q.type,
     evaluationType: q.evaluationType,
-    options: (q.options ?? []).map((o: any) => ({
+    options: (q.options ?? []).map((o) => ({
       text: o.text,
       score: o.score ?? undefined,
     })),

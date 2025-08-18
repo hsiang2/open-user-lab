@@ -42,3 +42,28 @@ export function formatError(error: any) {
       : JSON.stringify(error.message);
   }
 }
+
+
+// 這些泛型只適用於 "as const" 的字串常量陣列
+
+export function inConst<T extends readonly string[]>(
+  arr: T,
+  v: unknown
+): v is T[number] {
+  return typeof v === "string" && (arr as readonly string[]).includes(v);
+}
+
+export function toConstOrNull<T extends readonly string[]>(
+  arr: T,
+  v: unknown
+): T[number] | null {
+  return inConst(arr, v) ? (v as T[number]) : null;
+}
+
+export function toConstOrDefault<T extends readonly string[]>(
+  arr: T,
+  v: unknown,
+  def: T[number]
+): T[number] {
+  return inConst(arr, v) ? (v as T[number]) : def;
+}

@@ -1,17 +1,27 @@
-import { AVATAR_ACCESSORY, AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE } from "@/lib/constants";
+import { AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE } from "@/lib/constants";
+import { toConstOrDefault, toConstOrNull } from "@/lib/utils";
 import Image from "next/image";
+
+type Bg = (typeof AVATAR_BACKGROUND)[number];
+type Style = (typeof AVATAR_STYLE)[number];
+type Acc = (typeof AVATAR_ACCESSORY_KEYS)[number];
 
 const Avatar = ({
     width,
-    background = AVATAR_BACKGROUND[0], 
-    style = AVATAR_STYLE[0], 
-    accessory = null
+    background, 
+    style, 
+    accessory
 } : {
-    width: number; 
-    background: (typeof AVATAR_BACKGROUND)[number]; 
-    style: (typeof AVATAR_STYLE)[number]; 
-    accessory?:(typeof AVATAR_ACCESSORY_KEYS)[number] | null;
+   width: number;
+  background?: string | null;
+  style?: string | null;
+  accessory?: string | null;
 }) => {
+
+    const bg: Bg = toConstOrDefault(AVATAR_BACKGROUND, background, AVATAR_BACKGROUND[0]);
+    const st: Style = toConstOrDefault(AVATAR_STYLE, style, AVATAR_STYLE[0]);
+    const acc: Acc | null = toConstOrNull(AVATAR_ACCESSORY_KEYS, accessory);
+
     return (  
         <div className="relative" style={{ width, height: width }}>
             <Image

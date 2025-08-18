@@ -5,11 +5,12 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import StepHeader from "./StepHeader";
-import { finalizeParticipantWithThankYou, RowDTO, setParticipantStepStatus } from "@/lib/actions/participation.actions";
+import { finalizeParticipantWithThankYou, setParticipantStepStatus } from "@/lib/actions/participation.actions";
 import { Check } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ParticipantProgressRow, ParticipantWorkflowStepDTO } from "@/contracts/workflow";
 
-export default function SelectedTableClient({ steps, rows }: { steps: any[]; rows: any[] }) {
+export default function SelectedTableClient({ steps, rows }: { steps: ParticipantWorkflowStepDTO[]; rows: ParticipantProgressRow[] }) {
   const router = useRouter();
   const [isPending, start] = useTransition();
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -48,7 +49,7 @@ export default function SelectedTableClient({ steps, rows }: { steps: any[]; row
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((r:RowDTO) => {
+          {rows.map((r) => {
             const rowLocked = r.participationStatus === "Completed";
             return(
               <TableRow key={r.participationId} className={rowLocked ? "opacity-60" : ""}>

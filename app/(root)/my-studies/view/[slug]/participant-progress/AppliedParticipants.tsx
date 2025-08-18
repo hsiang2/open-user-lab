@@ -5,10 +5,8 @@ import { ApplicantSort, listAppliedParticipants, } from "@/lib/actions/participa
 import Link from "next/link";
 import RowActions from "./RowAction";
 import { Check, X } from "lucide-react";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent,  DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CriteriaList } from "../potential-participants/PotentialParticipantsCard"
-import { ManualDecision } from "@prisma/client";
-import { SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ManualReviewDialog from "./ManualReviewDialog";
 
 

@@ -1,4 +1,3 @@
-import { Study } from "@/types";
 import StudyCardExplore from "./studyCardExplore";
 import StudyCardResearcher from "./StudyCardResearcher";
 import StudyCardParticipant from "./studyCardParticipant";

@@ -49,6 +49,8 @@ export const backgroundOptions: Option[] = BACKGROUND_CATEGORIES.map((item) => (
     value: item,
 }));
 
+const fp = (s: string) => s as FieldPath<StudyFullInput>;
+
 type Props = { showErrors: boolean };
 
 const StudyInfoForm = ({ showErrors }: Props) => {
@@ -114,7 +116,9 @@ const SessionForm = ({ showErrors }: Props) => {
           <Controller
             name="format"
             control={control}
-            render={({ field }) => (
+            render={({ field }) => {
+              const selectedValues = Array.isArray(field.value) ? (field.value as string[]) : [];
+              return (
                 <div className="space-y-2">
                     <label
                     htmlFor={register("format").name}
@@ -123,11 +127,16 @@ const SessionForm = ({ showErrors }: Props) => {
                     Format
                     </label>
                     <MultipleSelector
-                    value={formatOptions.filter(opt => (field.value as string[])?.includes(opt.value))}
+                    value={formatOptions.filter(opt =>selectedValues.includes(opt.value))}
                     onChange={(selected: Option[]) => {
-                        let values = selected.map(opt => opt.value);                                     
-                        field.onChange(values);
-                        setShowOtherFormat(values.includes("Other"));
+                        const values = selected.map(o => o.value); // string[]
+                      // 告訴 TS 這其實是 enum union 的陣列（避免 any）
+                      field.onChange(values as (typeof RECRUITMENT_FORMATS)[number][]);
+                      // 判斷 Other 也用 selected 來看，避免 union 比對
+                      setShowOtherFormat(selected.some(s => s.value === "Other"));
+                        // const values = selected.map(opt => opt.value);                                     
+                        // field.onChange(values);
+                        // setShowOtherFormat(values.includes("Other"));
                     }}
                     defaultOptions={formatOptions}
                     placeholder="Select session formats"
@@ -143,7 +152,8 @@ const SessionForm = ({ showErrors }: Props) => {
             </span>
           )}
                 </div>
-            )}
+            )
+          }}
           />
          
           {showOtherFormat && (
@@ -250,9 +260,12 @@ const SessionForm = ({ showErrors }: Props) => {
 };
 
 // 小工具：從巢狀物件用 "a.b.c" 取值
-const getAt = (obj: any, path: string) =>
-  path.split(".").reduce((o, k) => (o ? (o as any)[k] : undefined), obj);
+// const getAt = (obj: any, path: string) =>
+//   path.split(".").reduce((o, k) => (o ? (o as any)[k] : undefined), obj);
+const getAt = <T,>(obj: T, path: string): unknown =>
+  path.split(".").reduce((o, k) => (o as any)?.[k], obj as any);
 
+type CriteriaKey = "gender" | "background" | "region" | "language";
 
 export function CriterionRow({
   label,
@@ -263,13 +276,13 @@ export function CriterionRow({
   watch,
 }: {
   label: string;
-  levelName: `criteria.${string}.matchLevel`;
-  valuesName: `criteria.${string}.values`;
+  levelName: `criteria.${CriteriaKey}.matchLevel`;
+  valuesName: `criteria.${CriteriaKey}.values`;
   options: Option[];
-  control: Control<any>;
-  watch: UseFormWatch<any>;
+  control: Control<StudyFullInput>;
+  watch: UseFormWatch<StudyFullInput>;
 }) {
-  const { setValue, formState: { errors } } = useFormContext();
+  const { setValue, formState: { errors } } = useFormContext<StudyFullInput>();
   const level = watch(levelName) as MatchLevel | undefined;
   const disabled = !level || level === "No Preference";
 
@@ -339,10 +352,10 @@ export function CriterionAgeRow({
   levelName: `criteria.age.matchLevel`;
   minName: `criteria.age.min`;
   maxName: `criteria.age.max`;
-  control: Control<any>;
-  watch: UseFormWatch<any>;
+  control: Control<StudyFullInput>;
+  watch: UseFormWatch<StudyFullInput>;
 }) {
-  const { setValue,  formState: { errors }  } = useFormContext();
+  const { setValue,  formState: { errors }  } = useFormContext<StudyFullInput>();
   const level = watch(levelName) as MatchLevel | undefined;
   const disabled = !level || level === "No Preference";
 
@@ -450,8 +463,8 @@ export function CriteriaForm({showErrors}: Props) {
         levelName="criteria.age.matchLevel"
         minName="criteria.age.min"
         maxName="criteria.age.max"
-        control={control as unknown as Control<any>}
-        watch={watch as unknown as UseFormWatch<any>}
+        control={control}
+        watch={watch}
       />
 
       <CriterionRow
@@ -459,8 +472,8 @@ export function CriteriaForm({showErrors}: Props) {
         levelName="criteria.gender.matchLevel"
         valuesName="criteria.gender.values"
         options={genderOptions}
-        control={control as unknown as Control<any>}
-        watch={watch as unknown as UseFormWatch<any>}
+        control={control}
+        watch={watch}
       />
 
       <CriterionRow
@@ -468,8 +481,8 @@ export function CriteriaForm({showErrors}: Props) {
         levelName="criteria.background.matchLevel"
         valuesName="criteria.background.values"
         options={backgroundOptions}
-        control={control as unknown as Control<any>}
-        watch={watch as unknown as UseFormWatch<any>}
+        control={control}
+        watch={watch}
       />
 
       <CriterionRow
@@ -477,8 +490,8 @@ export function CriteriaForm({showErrors}: Props) {
         levelName="criteria.region.matchLevel"
         valuesName="criteria.region.values"
         options={regionOptions}
-        control={control as unknown as Control<any>}
-        watch={watch as unknown as UseFormWatch<any>}
+        control={control}
+        watch={watch}
       />
 
       <CriterionRow
@@ -486,42 +499,50 @@ export function CriteriaForm({showErrors}: Props) {
         levelName="criteria.language.matchLevel"
         valuesName="criteria.language.values"
         options={languageOptions}
-        control={control as unknown as Control<any>}
-        watch={watch as unknown as UseFormWatch<any>}
+        control={control}
+        watch={watch}
       />
     </div>
   );
 }
 
-export default function WorkflowFormBase({ fieldName, showErrors }: {
-  fieldName: "participantSteps" | "studySteps";
+export default function WorkflowFormBase<T extends "participantSteps" | "studySteps">({ fieldName, showErrors }: {
+  fieldName: T;
   showErrors: boolean;
 }) {
   const {
     control,
     register,
     formState: { errors },
-  } = useFormContext(); // 泛型沿用你外層 <FormProvider> 的 StudyFullInput
+  } = useFormContext<StudyFullInput>(); // 泛型沿用你外層 <FormProvider> 的 StudyFullInput
 
-  const { fields, append, remove, move, insert } = useFieldArray({
+  const { fields, append, remove, move, insert } = useFieldArray<StudyFullInput>({
     control,
-    name: fieldName as any,
+    name: fieldName,
   });
+
+  const listErr = getAt(errors, fieldName) as { message?: string } | undefined;
+
+  type ParticipantStepInput = z.infer<typeof insertParticipantWorkflowStep>;
+  type StudyStepInput       = z.infer<typeof insertStudyWorkflowStep>;
+
 
   const addEmpty = () => {
     if (fieldName === "participantSteps") {
-      append({
+      const empty: ParticipantStepInput = {
         name: "",
         noteResearcher: "",
         noteParticipant: "",
         deadline: undefined,
-      } as any);
+      };
+      append(empty); 
     } else {
-      append({
+      const empty: StudyStepInput = {
         name: "",
         note: "",
         deadline: undefined,
-      } as any);
+      };
+      append(empty); // 同上
     }
   };
 
@@ -529,14 +550,11 @@ export default function WorkflowFormBase({ fieldName, showErrors }: {
     insert(i + 1, fields[i]);
   };
 
-  // 初始沒有就塞一列（可選）
-  // useEffect(() => { if (fields.length === 0) addEmpty(); }, [fields.length]);
-
   return (
     <div className={cn("w-full max-w-[900px] space-y-4")}>
       <div className="flex justify-between items-center">
         <h4 className="text-base font-medium">
-          {fieldName === "participantSteps" ? "Participant Workflow" : "Study Workflow"}
+          {fieldName === "participantSteps" ? "Participant Workflow" : "Study Workflow (optional)"}
         </h4>
         <Button type="button" onClick={addEmpty}>Add step</Button>
       </div>
@@ -571,7 +589,7 @@ export default function WorkflowFormBase({ fieldName, showErrors }: {
                   <div>
                     <label className="block text-sm font-medium text-primary">Step name</label>
                     <Input
-                      {...register(`${base}.name` as const)}
+                      {...register(fp(`${base}.name`))}
                       placeholder="e.g. Send screening survey"
                       aria-invalid={!!nameErr}
                     />
@@ -586,7 +604,7 @@ export default function WorkflowFormBase({ fieldName, showErrors }: {
                       <div>
                         <label className="block text-sm font-medium text-primary">Note (Researcher)</label>
                         <Input
-                          {...register(`${base}.noteResearcher` as const)}
+                          {...register(fp(`${base}.noteResearcher`))}
                           placeholder="Optional note for researchers"
                           aria-invalid={!!noteRErr}
                         />
@@ -597,7 +615,7 @@ export default function WorkflowFormBase({ fieldName, showErrors }: {
                       <div>
                         <label className="block text-sm font-medium text-primary">Note (Participant)</label>
                         <Input
-                          {...register(`${base}.noteParticipant` as const)}
+                          {...register(fp(`${base}.noteParticipant`))}
                           placeholder="Optional note visible to participants"
                           aria-invalid={!!notePErr}
                         />
@@ -610,7 +628,7 @@ export default function WorkflowFormBase({ fieldName, showErrors }: {
                     <div>
                       <label className="block text-sm font-medium text-primary">Note (Optional)</label>
                       <Input
-                        {...register(`${base}.note` as const)}
+                        {...register(fp(`${base}.note`))}
                         placeholder="Optional note"
                         aria-invalid={!!noteErr}
                       />
@@ -624,7 +642,7 @@ export default function WorkflowFormBase({ fieldName, showErrors }: {
                   <div>
                     <label className="block text-sm font-medium text-primary">Deadline (Optional)</label>
                     <Controller
-                      name={`${base}.deadline`}
+                      name={fp(`${base}.deadline`)}
                       control={control}
                       render={({ field }) => (
                         <Popover>
@@ -657,12 +675,6 @@ export default function WorkflowFormBase({ fieldName, showErrors }: {
                         </Popover>
                       )} 
                     />
-                    
-                    {/* <Input
-                      type="date"
-                      {...register(`${base}.deadline` as const)}
-                      aria-invalid={!!deadlineErr}
-                    /> */}
                     {showErrors && deadlineErr && (
                       <p className="mt-1 text-sm text-destructive">{deadlineErr.message}</p>
                     )}
@@ -697,6 +709,10 @@ export default function WorkflowFormBase({ fieldName, showErrors }: {
 
       {fields.length === 0 && (
         <p className="text-sm text-muted-foreground">No steps yet. Click “Add step”.</p>
+      )}
+
+      {showErrors && listErr?.message && (
+        <p className="mt-1 text-sm text-destructive">{listErr.message}</p>
       )}
     </div>
   );
@@ -782,31 +798,7 @@ const { Stepper, useStepper } = defineStepper(
   }),
   Component: StudyWorkflowForm,
 },
-  // {
-  //   id: "participantWorkflow",
-  //   title: "Participant Workflow",
-  //     schema: insertStudySchema,
-  //   Component: StudyInfoForm,
-  // },
-  // {
-  //   id: "studyWorkflow",
-  //   title: "Study Workflow",
-  //     schema: insertStudySchema,
-  //   Component: StudyInfoForm,
-  // },
-
-
-//   {
-//     id: "studyWorkflow",
-//     title: "Study Workflow",
-//     schema: z.object({}),
-//     Component: CompleteComponent,
-//   }
 );
-// type FormValues = z.infer<typeof insertStudySchema> & z.infer<typeof insertRecruitmentSchema>;
-
-
-
 
 export function StepperWithForm() {
   return (
@@ -841,28 +833,6 @@ const FormStepperComponent = () => {
 
   const [showErrorsByStep, setShowErrorsByStep] = useState<Record<string, boolean>>({});
   const showErrors = !!showErrorsByStep[methods.current.id];
-
-  // const onSubmit = (values: z.infer<typeof methods.current.schema>) => {
-
-//         const trimmedformatOther = values.formatOther?.trim();
-//         const trimmedWebsite = values.website?.trim();
-
-//         const payload = {
-//         ...values,
-
-//         formatOther:
-//             values.format === "Other" && trimmedformatOther
-//             ? trimmedformatOther
-//             : null,
-
-//         website:
-//             trimmedWebsite === "" ? undefined : trimmedWebsite,
-//         };
-
-  //   alert(
-  //     `Form values for step ${methods.current.id}: ${JSON.stringify(values)}`
-  //   );
-  // };
 
   const onSubmit = async (all: StudyFullInput) => {
     // 不是最後一步就不送（避免有人按 Enter 觸發 submit）
@@ -974,11 +944,6 @@ const FormStepperComponent = () => {
                 }
                 methods.goTo(step.id);
               }}
-              // onClick={async () => {
-              //   const valid = await form.trigger();
-              //   if (!valid) return;
-              //   methods.goTo(step.id);
-              // }}
             >
               <Stepper.Title>{step.title}</Stepper.Title>
             </Stepper.Step>
@@ -1013,12 +978,6 @@ const FormStepperComponent = () => {
                 form.handleSubmit(onSubmit)();
               }
             }}
-            // type={methods.isLast ? "submit" : "button"}
-              // onClick={
-              //   methods.isLast
-              //     ? undefined // submit 交給 form.handleSubmit(onSubmit)
-              //     : handleNext
-              // }
           >
             {methods.isLast ? "Create Study" : "Next"}
           </Button>
@@ -1027,64 +986,3 @@ const FormStepperComponent = () => {
     </Form>
   );
 };
-
-
-  // onClick={async () => {
-  //   const valid = await form.trigger(undefined, { shouldFocus: true });
-  //   if (!valid) {
-  //     setShowErrorsByStep(p => ({ ...p, [methods.current.id]: true }));
-  //     return;
-  //   }
-  //   methods.next();
-  // }}
-
-  //           type="submit"
-              // onClick={() => {
-              // if (methods.isLast) {
-              //   return methods.reset();
-              // }
-              // methods.beforeNext(async () => {
-              //   const valid = await form.trigger();
-              //   if (!valid) return false;
-              //   return true;
-              // });
-  //                 methods.beforeNext(async () => {
-  //     const stepKeys = Object.keys((methods.current.schema as any)._def.shape) as any;
-  // const valid = await form.trigger(stepKeys, { shouldFocus: true });
-  // console.log("stepKeys", stepKeys);
-  // console.log("form values", form.getValues());
-  // console.log("valid", valid);
-  // return valid; });
-  //           }}
-
-            // onClick={() => {
-            //   if (methods.isLast) {
-            //     return methods.reset();
-            //   }
-            //   methods.beforeNext(async () => {
-            //     const valid = await form.trigger();
-            //      console.log("trigger result", valid);
-            //     if (!valid) return false;
-            //     return true;
-            //   });
-             
-            // }}
-            // onClick={methods.isLast ? methods.reset : methods.next}
-//             onClick={() => {
-//     if (methods.isLast) {
-//       return methods.reset();
-//     }
-//     methods.beforeNext(async () => {
-//       const stepKeys = Object.keys((methods.current.schema as any)._def.shape) as any;
-//   const valid = await form.trigger(stepKeys, { shouldFocus: true });
-//   console.log("stepKeys", stepKeys);
-//   console.log("form values", form.getValues());
-//   console.log("valid", valid);
-//   return valid;
-// //      const stepKeys = Object.keys((methods.current.schema as any)._def.shape) as (keyof FormValues)[];
-// // const valid = await form.trigger(stepKeys, { shouldFocus: true });
-
-// //       if (!valid) return false;
-// //       return true;
-//     });
-//   }}

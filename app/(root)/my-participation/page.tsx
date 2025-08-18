@@ -2,7 +2,6 @@ import { auth } from "@/auth";
 import StudyList from "@/components/shared/study/studyList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listMyEndedStudies, listMyInvitationStudies, listMyParticipatingStudies, listMyPendingStudies } from "@/lib/actions/my-participation.action";
-import { Study } from "@/types";
 
 const MyParticipationPage = async () => {
   

@@ -3,10 +3,11 @@
 import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
 import { CheckResult } from "@/types";
-import { Criterion, evaluate, getProfileValue, isPreferNotToSay, match } from "./eligibility";
+import { Criterion, evaluate } from "./eligibility";
 import { CollaboratorRole, ParticipationStatus, QuestionType, RecruitmentStatus, StepStatus, StudyStatus } from "@prisma/client";
 import { normalizedFormSchema } from "../validators";
 import { revalidatePath } from "next/cache";import { redirect } from "next/navigation";
+import { mapParticipantStep, mapParticipationToProgressRow, mapStudyStep, PARTICIPANT_WORKFLOW_STEP_SELECT, ParticipantProgressRow, ParticipantWorkflowStepDTO, PARTICIPATION_PROGRESS_SELECT, STUDY_WORKFLOW_STEP_SELECT, StudyStepDTO, StudyStepStatusDTO } from "@/contracts/workflow";
 ;
 
 export async function checkStudyEligibility(slug: string): Promise<CheckResult> {
@@ -77,81 +78,6 @@ export async function checkStudyEligibility(slug: string): Promise<CheckResult> 
     // 保持與既有型別一致：這裡不回傳 score/requiredMatched 等前端用不到的欄位
   };
 }
-
-
-// export async function checkStudyEligibility(slug: string): Promise<CheckResult> {
-//   const session = await auth();
-//   const userId = session?.user?.id;
-//   if (!userId) {
-//     return { ok: false, hasForm: false, missingRequired: [], missingOptional: [], requiredMismatches: [], optionalMismatches: [], reason: "Unauthenticated" };
-//   }
-
-//   const study = await prisma.study.findUnique({
-//     where: { slug },
-//     select: {
-//       id: true,
-//       status: true,
-//       recruitmentStatus: true,
-//       form: { select: { id: true } },
-//       criteria: { select: { type: true, value: true, matchLevel: true } },
-//     },
-//   });
-//   if (!study) {
-//     return { ok: false, hasForm: false, missingRequired: [], missingOptional: [], requiredMismatches: [], optionalMismatches: [], reason: "Study not found" };
-//   }
-//   const hasForm = !!study.form?.id;
-
-//   // 取用戶個資
-//   const profile = await prisma.userProfile.findUnique({
-//     where: { userId },
-//     select: { gender: true, language: true, region: true, background: true, birth: true },
-//   });
-
-//   const missingRequired: string[] = [];
-//   const missingOptional: string[] = [];
-//   const requiredMismatches: string[] = [];
-//   const optionalMismatches: string[] = [];
-
-//   for (const c of study.criteria) {
-//     const pv = getProfileValue(profile, c.type);
-//     const isMissing = isPreferNotToSay(pv);
-//     const ok = match(c.type, c.value, pv);
-
-//     if (isMissing) {
-//       if (c.matchLevel === "Required") missingRequired.push(c.type);
-//       else missingOptional.push(c.type);
-//       continue;
-//     }
-
-//     if (!ok) {
-//       if (c.matchLevel === "Required") requiredMismatches.push(c.type);
-//       else optionalMismatches.push(c.type);
-//     }
-//   }
-
-//   if (missingRequired.length || requiredMismatches.length) {
-//     return {
-//       ok: false,
-//       hasForm,
-//       missingRequired,
-//       missingOptional,
-//       requiredMismatches,
-//       optionalMismatches,
-//       reason: "Not eligible",
-//     };
-//   }
-
-//   // Required 全部 OK；Optional 可能缺/不符但不擋
-//   return {
-//     ok: true,
-//     hasForm,
-//     missingRequired,
-//     missingOptional,
-//     requiredMismatches,
-//     optionalMismatches,
-//   };
-// }
-
 
 export async function applyDirectly(slug: string) {
   const session = await auth();
@@ -239,78 +165,6 @@ export async function listInvitationsForStudy(slug: string) {
     orderBy: { createdAt: "desc" },
   });
 }
-
-// export async function listInvitedParticipantsPaginated({
-//   slug,
-//   cursor,
-//   take = 20,
-// }: { slug: string; cursor?: string; take?: number }) {
-//   const study = await prisma.study.findUnique({
-//     where: { slug },
-//     select: { id: true },
-//   });
-//   if (!study) throw new Error("Study not found");
-
-//   const rows = await prisma.invitation.findMany({
-//     where: { studyId: study.id },
-//     select: {
-//       id: true,
-//       status: true,
-//       createdAt: true,
-//       respondedAt: true,
-//       user: { select: { id: true, name: true } },
-//     },
-//     orderBy: { createdAt: "desc" },
-//     take: take + 1,
-//     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-//   });
-
-//   const items = rows.slice(0, take);
-//   const nextCursor = rows.length > take ? items[items.length - 1].id : undefined;
-
-//   return { items, nextCursor };
-// }
-
-
-// export async function listSelectedParticipants( slug: string ) {
-//   const study = await prisma.study.findUnique({
-//     where: { slug },
-//     select: { id: true },
-//   });
-//   if (!study) throw new Error("Study not found");
-
-//   return prisma.participation.findMany({
-//     where: {
-//       studyId: study.id,
-//       status: { in: ["Selected", "Completed"] },
-//     },
-//     select: {
-//       id: true,
-//       status: true,
-//       updatedAt: true,
-//       user: { select: { id: true, name: true } },
-//       workflowStepStatuses: {
-//         select: {
-//           id: true,
-//           stepId: true,
-//           status: true,
-//           completedAt: true,
-//           step: { select: { id: true, name: true, order: true } },
-//         },
-//         orderBy: { step: { order: "asc" } },
-//       },
-//       thankYouCertificate: { select: { id: true } },
-//     },
-//     orderBy: { updatedAt: "desc" },
-//     // take: take + 1,
-//     // ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-//   });
-
-//   // const items = rows.slice(0, take);
-//   // const nextCursor = rows.length > take ? items[items.length - 1].id : undefined;
-
-//   // return { items, nextCursor };
-// }
 
 export type ManualDecision = "Pass" | "Fail" | "Unsure" | null;
 
@@ -644,30 +498,9 @@ export async function updateManualDecisions(input: {
 }
 
 
-export type WorkflowStepDTO = {
-  id: string;
-  name: string;
-  order: number;
-  noteResearcher: string | null;
-  noteParticipant: string | null;
-  deadline: string | null; // ISO
-};
-
-export type RowDTO = {
-  participationId: string;
-  participationStatus: ParticipationStatus;
-  user: { id: string; name: string | null };
-  statuses: Array<{
-    stepId: string;
-    statusId?: string;
-    status: StepStatus;
-    completedAt?: string | null;
-  }>;
-};
-
-export async function listSelectedWithWorkflow(slug: string): Promise<{
-  steps: WorkflowStepDTO[];
-  rows: RowDTO[];
+export async function listSelectedParticipantProgress(slug: string): Promise<{
+  steps: ParticipantWorkflowStepDTO[];
+  progress: ParticipantProgressRow[];
 }> {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthenticated");
@@ -677,65 +510,117 @@ export async function listSelectedWithWorkflow(slug: string): Promise<{
     select: {
       id: true,
       participantWorkflow: {
-        select: {
-          steps: {
-            select: {
-              id: true,
-              name: true,
-              order: true,
-              noteResearcher: true,
-              noteParticipant: true,
-              deadline: true,
-            },
-            orderBy: { order: "asc" },
-          },
-        },
+        select: { steps: { select: PARTICIPANT_WORKFLOW_STEP_SELECT, orderBy: { order: "asc" } } },
       },
     },
   });
   if (!study) throw new Error("Study not found");
 
-  const steps: WorkflowStepDTO[] =
-    (study.participantWorkflow?.steps ?? []).map(s => ({
-      id: s.id,
-      name: s.name,
-      order: s.order,
-      noteResearcher: s.noteResearcher ?? null,
-      noteParticipant: s.noteParticipant ?? null,
-      deadline: s.deadline ? s.deadline.toISOString() : null,
-    }));
+  const steps = (study.participantWorkflow?.steps ?? []).map(mapParticipantStep);
+  const stepIds = steps.map(s => s.id);
 
   const parts = await prisma.participation.findMany({
     where: { studyId: study.id, status: { in: ["Selected", "Completed"] } },
-    select: {
-      id: true,
-      status: true,
-      user: { select: { id: true, name: true } },
-      workflowStepStatuses: {
-        select: { id: true, status: true, completedAt: true, stepId: true },
-      },
-    },
+    select: PARTICIPATION_PROGRESS_SELECT,
     orderBy: { updatedAt: "desc" },
   });
 
-  const rows: RowDTO[] = parts.map(p => {
-    const map = new Map(p.workflowStepStatuses.map(s => [s.stepId, s]));
-    const statuses = steps.map(st => {
-      const hit = map.get(st.id);
-      return hit
-        ? {
-            stepId: st.id,
-            statusId: hit.id,
-            status: hit.status,
-            completedAt: hit.completedAt?.toISOString() ?? null,
-          }
-        : { stepId: st.id, status: "todo" as StepStatus };
-    });
-    return { participationId: p.id, participationStatus: p.status, user: p.user, statuses };
-  });
-
-  return { steps, rows };
+  const progress = parts.map(p => mapParticipationToProgressRow(p, stepIds));
+  return { steps, progress };
 }
+
+// export type WorkflowStepDTO = {
+//   id: string;
+//   name: string;
+//   order: number;
+//   noteResearcher: string | null;
+//   noteParticipant: string | null;
+//   deadline: string | null; // ISO
+// };
+
+// export type RowDTO = {
+//   participationId: string;
+//   participationStatus: ParticipationStatus;
+//   user: { id: string; name: string | null };
+//   statuses: Array<{
+//     stepId: string;
+//     statusId?: string;
+//     status: StepStatus;
+//     completedAt?: string | null;
+//   }>;
+// };
+
+// export async function listSelectedWithWorkflow(slug: string): Promise<{
+//   steps: WorkflowStepDTO[];
+//   rows: RowDTO[];
+// }> {
+//   const session = await auth();
+//   if (!session?.user?.id) throw new Error("Unauthenticated");
+
+//   const study = await prisma.study.findUnique({
+//     where: { slug },
+//     select: {
+//       id: true,
+//       participantWorkflow: {
+//         select: {
+//           steps: {
+//             select: {
+//               id: true,
+//               name: true,
+//               order: true,
+//               noteResearcher: true,
+//               noteParticipant: true,
+//               deadline: true,
+//             },
+//             orderBy: { order: "asc" },
+//           },
+//         },
+//       },
+//     },
+//   });
+//   if (!study) throw new Error("Study not found");
+
+//   const steps: WorkflowStepDTO[] =
+//     (study.participantWorkflow?.steps ?? []).map(s => ({
+//       id: s.id,
+//       name: s.name,
+//       order: s.order,
+//       noteResearcher: s.noteResearcher ?? null,
+//       noteParticipant: s.noteParticipant ?? null,
+//       deadline: s.deadline ? s.deadline.toISOString() : null,
+//     }));
+
+//   const parts = await prisma.participation.findMany({
+//     where: { studyId: study.id, status: { in: ["Selected", "Completed"] } },
+//     select: {
+//       id: true,
+//       status: true,
+//       user: { select: { id: true, name: true } },
+//       workflowStepStatuses: {
+//         select: { id: true, status: true, completedAt: true, stepId: true },
+//       },
+//     },
+//     orderBy: { updatedAt: "desc" },
+//   });
+
+//   const rows: RowDTO[] = parts.map(p => {
+//     const map = new Map(p.workflowStepStatuses.map(s => [s.stepId, s]));
+//     const statuses = steps.map(st => {
+//       const hit = map.get(st.id);
+//       return hit
+//         ? {
+//             stepId: st.id,
+//             statusId: hit.id,
+//             status: hit.status,
+//             completedAt: hit.completedAt?.toISOString() ?? null,
+//           }
+//         : { stepId: st.id, status: "todo" as StepStatus };
+//     });
+//     return { participationId: p.id, participationStatus: p.status, user: p.user, statuses };
+//   });
+
+//   return { steps, rows };
+// }
 
 
 
@@ -743,7 +628,7 @@ export async function listSelectedWithWorkflow(slug: string): Promise<{
 export async function setParticipantStepStatus(params: {
   participationId: string;
   stepId: string;
-  status: StepStatus;                // 'todo' | 'completed'
+  status: StepStatus;         
 }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthenticated");
@@ -779,18 +664,6 @@ export async function setParticipantStepStatus(params: {
 }
 
 
-export type StudyStepDTO = {
-  id: string;
-  name: string;
-  order: number;
-  note: string | null;
-  deadline: string | null; // ISO
-};
-
-export type StudyStepStatusDTO = {
-  stepId: string;
-  status: "todo" | "completed";
-};
 export async function getStudyWorkflowForSlug(slug: string): Promise<{
   studyId: string;
   steps: StudyStepDTO[];
@@ -800,10 +673,9 @@ export async function getStudyWorkflowForSlug(slug: string): Promise<{
     where: { slug },
     select: {
       id: true,
-      slug: true,
       studyWorkflow: {
-        include: {
-          steps: { orderBy: { order: "asc" } },
+        select: {
+          steps: { select: STUDY_WORKFLOW_STEP_SELECT, orderBy: { order: "asc" } },
         },
       },
     },
@@ -811,47 +683,118 @@ export async function getStudyWorkflowForSlug(slug: string): Promise<{
 
   if (!study) throw new Error("Study not found");
 
-  // 可能還沒建立 studyWorkflow → 回傳空
+  // 還沒建立 workflow → 回傳空
   if (!study.studyWorkflow) {
     return { studyId: study.id, steps: [], statuses: [] };
   }
 
-  const steps = study.studyWorkflow.steps.map<StudyStepDTO>((s) => ({
-    id: s.id,
-    order: s.order,
-    name: s.name,
-    note: s.note ?? null,
-    deadline: s.deadline ? s.deadline.toISOString() : null,
-  }));
+  const steps: StudyStepDTO[] = study.studyWorkflow.steps.map(mapStudyStep);
+  const stepIds = steps.map(s => s.id);
 
   // 取現有狀態
   const existed = await prisma.studyWorkflowStepStatus.findMany({
     where: { studyId: study.id },
     select: { stepId: true, status: true },
   });
-  const existedMap = new Map(existed.map((x) => [x.stepId, x.status]));
+  const existedMap = new Map(existed.map(x => [x.stepId, x.status]));
 
-  // 找出缺的狀態 → 建立為 todo
-  const missing = steps.filter((s) => !existedMap.has(s.id));
+  // 補缺的狀態 → 建立為 todo（保留你原來邏輯）
+  const missing = stepIds.filter(id => !existedMap.has(id));
   if (missing.length) {
     await prisma.studyWorkflowStepStatus.createMany({
-      data: missing.map((m) => ({
+      data: missing.map(stepId => ({
         studyId: study.id,
-        stepId: m.id,
+        stepId,
         status: "todo",
         completedAt: null,
       })),
     });
   }
 
-  // 重新組合（保證每個 step 都有一筆）
-  const statuses: StudyStepStatusDTO[] = steps.map((s) => ({
-    stepId: s.id,
-    status: (existedMap.get(s.id) ?? "todo") as "todo" | "completed",
+  // 組合輸出（保證每個 step 都有一筆）
+  const statuses: StudyStepStatusDTO[] = stepIds.map(stepId => ({
+    stepId,
+    status: existedMap.get(stepId) ?? "todo",
   }));
 
   return { studyId: study.id, steps, statuses };
 }
+
+
+// export type StudyStepDTO = {
+//   id: string;
+//   name: string;
+//   order: number;
+//   note: string | null;
+//   deadline: string | null; // ISO
+// };
+
+// export type StudyStepStatusDTO = {
+//   stepId: string;
+//   status: "todo" | "completed";
+// };
+
+// export async function getStudyWorkflowForSlug(slug: string): Promise<{
+//   studyId: string;
+//   steps: StudyStepDTO[];
+//   statuses: StudyStepStatusDTO[];
+// }> {
+//   const study = await prisma.study.findUnique({
+//     where: { slug },
+//     select: {
+//       id: true,
+//       slug: true,
+//       studyWorkflow: {
+//         include: {
+//           steps: { orderBy: { order: "asc" } },
+//         },
+//       },
+//     },
+//   });
+
+//   if (!study) throw new Error("Study not found");
+
+//   // 可能還沒建立 studyWorkflow → 回傳空
+//   if (!study.studyWorkflow) {
+//     return { studyId: study.id, steps: [], statuses: [] };
+//   }
+
+//   const steps = study.studyWorkflow.steps.map<StudyStepDTO>((s) => ({
+//     id: s.id,
+//     order: s.order,
+//     name: s.name,
+//     note: s.note ?? null,
+//     deadline: s.deadline ? s.deadline.toISOString() : null,
+//   }));
+
+//   // 取現有狀態
+//   const existed = await prisma.studyWorkflowStepStatus.findMany({
+//     where: { studyId: study.id },
+//     select: { stepId: true, status: true },
+//   });
+//   const existedMap = new Map(existed.map((x) => [x.stepId, x.status]));
+
+//   // 找出缺的狀態 → 建立為 todo
+//   const missing = steps.filter((s) => !existedMap.has(s.id));
+//   if (missing.length) {
+//     await prisma.studyWorkflowStepStatus.createMany({
+//       data: missing.map((m) => ({
+//         studyId: study.id,
+//         stepId: m.id,
+//         status: "todo",
+//         completedAt: null,
+//       })),
+//     });
+//   }
+
+//   // 重新組合（保證每個 step 都有一筆）
+//   const statuses: StudyStepStatusDTO[] = steps.map((s) => ({
+//     stepId: s.id,
+//     status: (existedMap.get(s.id) ?? "todo") as "todo" | "completed",
+//   }));
+
+//   return { studyId: study.id, steps, statuses };
+// }
 
 
 // 切換 study workflow 的步驟狀態

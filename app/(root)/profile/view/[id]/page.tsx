@@ -181,7 +181,7 @@ const ProfilePage = async (props: {
                 </TabsContent>
                 <TabsContent value="studies" className="w-full p-4">
                     <div className="bg-[#FCF2E0] rounded-md w-full min-h-[200px] p-8">
-                        <StudyList data={studies as any} type="explore" />
+                        <StudyList data={studies} type="explore" />
                     </div>
                     
                 </TabsContent>
