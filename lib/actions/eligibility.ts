@@ -8,7 +8,7 @@ export type Criterion = {
   matchLevel: "Required" | "Optional";
 };
 
-export function getProfileValue(profile: any, type: string): unknown {
+export function getProfileValue(profile: ProfileForEval, type: string): unknown {
   switch (type) {
     case "gender": return profile?.gender ?? null;
     case "language": return profile?.language ?? [];
