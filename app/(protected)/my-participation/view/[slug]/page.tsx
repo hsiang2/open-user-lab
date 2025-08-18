@@ -8,7 +8,7 @@ import { getMyParticipationDetailBySlug } from "@/lib/actions/my-participation.a
 import { AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE, STUDY_IMAGE } from "@/lib/constants";
 import Link from "next/link";
 
-export default async function MyParticipationDetailPage({ params }: { params: { slug: string } }) {
+export default async function MyParticipationDetailPage({ params }:  {params: Promise<{ slug: string }>}) {
   const { slug } = await params
   const data = await getMyParticipationDetailBySlug(slug);
 
