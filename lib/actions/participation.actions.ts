@@ -1,5 +1,7 @@
 'use server'
 
+import { z } from 'zod';
+import { insertCriteria } from '@/lib/validators';
 import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
 import { CheckResult, NormalizedFormPayload } from "@/types";
@@ -1542,3 +1544,18 @@ export async function countEligibleProfiles(criteria: Criterion[]) {
   return prisma.userProfile.count({ where: where.profile.is });
 }
 
+const Payload = z.object({ criteria: z.array(insertCriteria) });
+
+// export async function estimateEligibleAction(
+//   _prev: { count?: number; error?: string } | null,
+//   formData: FormData
+// ) {
+//   try {
+//     const raw = formData.get('payload');
+//     const parsed = Payload.parse(JSON.parse(String(raw)));
+//     const count = await countEligibleProfiles(parsed.criteria);
+//     return { count };
+//   } catch (e: any) {
+//     return { error: e?.message ?? 'Failed to estimate' };
+//   }
+// }

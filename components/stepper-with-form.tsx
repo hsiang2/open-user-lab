@@ -22,6 +22,7 @@ import { createStudyFull } from "@/lib/actions/study.actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Textarea } from "./ui/textarea";
+import { EligibleCountButton } from "./EligibleCount";
 
 export const formatOptions: Option[] = RECRUITMENT_FORMATS.map((item) => ({
     label: item,
@@ -466,6 +467,7 @@ export function CriteriaForm({showErrors}: Props) {
 
   return (
     <div className="space-y-6 w-full max-w-[800px]">
+      <EligibleCountButton />
       {/* <EligibleCountChip /> */}
       <CriterionAgeRow
         levelName="criteria.age.matchLevel"
