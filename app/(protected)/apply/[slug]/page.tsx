@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 
 import { getApplyForm } from "@/lib/actions/participation.actions";
 import ApplyFormClient from "./ApplyFormClient";
+import { PageParams } from "@/types/next-helper";
 
-export default async function ApplyPage( { params }:  {params: Promise<{ slug: string }>} ) {
+export default async function ApplyPage( { params }: PageParams<{ slug: string }> ) {
   const session = await auth();
   if (!session?.user?.id) notFound();
 

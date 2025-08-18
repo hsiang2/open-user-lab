@@ -5,10 +5,11 @@ import WorkflowParticipant from "@/components/shared/study/WorkflowParticipant";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMyParticipationDetailBySlug } from "@/lib/actions/my-participation.action";
-import { AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE, STUDY_IMAGE } from "@/lib/constants";
+import { AVATAR_ACCESSORY_KEYS, AVATAR_STYLE, STUDY_IMAGE } from "@/lib/constants";
+import { PageParams } from "@/types/next-helper";
 import Link from "next/link";
 
-export default async function MyParticipationDetailPage({ params }:  {params: Promise<{ slug: string }>}) {
+export default async function MyParticipationDetailPage({ params }: PageParams<{ slug: string }>) {
   const { slug } = await params
   const data = await getMyParticipationDetailBySlug(slug);
 
