@@ -6,12 +6,15 @@ import SelectedParticipants from "./SelectedParticipants";
 import SortSelect from "./SortSelect";
 
 
-type PageProps = {
+// type PageProps = {
+//   params: { slug: string };
+//   searchParams: Promise<{ sort?: string }>;
+// };
+
+const ParticipantProgressPage = async ({ params, searchParams }: {
   params: { slug: string };
   searchParams: Promise<{ sort?: string }>;
-};
-
-const ParticipantProgressPage = async ({ params, searchParams }: PageProps) => {
+}) => {
 
     const { slug } = await params;
     const { sort } = await searchParams;

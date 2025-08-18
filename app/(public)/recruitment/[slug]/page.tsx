@@ -13,12 +13,15 @@ import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2Icon } from "lucide-react";
 
-type PageProps = {
+// type PageProps = {
+//   params: { slug: string };
+//   searchParams: Promise<{ applied?: string; dup?: string; error?: string }>;
+// };
+
+const StudyDetailsRecruitmentPage = async ({ params, searchParams }: {
   params: { slug: string };
   searchParams: Promise<{ applied?: string; dup?: string; error?: string }>;
-};
-
-const StudyDetailsRecruitmentPage = async ({ params, searchParams }: PageProps) => {
+}) => {
      const { slug } = await params;            
   const { applied, dup, error } = await searchParams; 
 
