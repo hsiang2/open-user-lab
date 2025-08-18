@@ -12,16 +12,20 @@ import Avatar from "@/components/shared/avatar/Avatar";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2Icon } from "lucide-react";
+import { PageProps } from "@/types/next-helper";
 
 // type PageProps = {
 //   params: { slug: string };
 //   searchParams: Promise<{ applied?: string; dup?: string; error?: string }>;
 // };
 
-const StudyDetailsRecruitmentPage = async ({ params, searchParams }: {
-  params: { slug: string };
-  searchParams: Promise<{ applied?: string; dup?: string; error?: string }>;
-}) => {
+const StudyDetailsRecruitmentPage = async (
+    { params, searchParams }: PageProps<{ slug: string }, { applied?: string; dup?: string; error?: string }>
+//     { params, searchParams }: {
+//   params: { slug: string };
+//   searchParams: Promise<{ applied?: string; dup?: string; error?: string }>;
+// }
+) => {
      const { slug } = await params;            
   const { applied, dup, error } = await searchParams; 
 

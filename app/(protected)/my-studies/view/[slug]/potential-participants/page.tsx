@@ -4,13 +4,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PotentialParticipantCard } from "./PotentialParticipantsCard";
 import { prisma } from "@/db/prisma";
+import { PageProps } from "@/types/next-helper";
 
-type PageProps = {
-  params: { slug: string };
-  searchParams: { cursor?: string; };
-};
+// type PageProps = {
+//   params: { slug: string };
+//   searchParams: { cursor?: string; };
+// };
 
-const PotentialParticipantsPage = async ({ params, searchParams }: PageProps) => {
+const PotentialParticipantsPage = async ( { params, searchParams }: PageProps<{ slug: string }, { cursor?: string }>) => {
 
     const { cursor } = await searchParams; 
     const  { slug } = await params;

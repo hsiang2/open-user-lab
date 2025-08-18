@@ -4,6 +4,7 @@ import InvitedParticipants from "./InvitedParticipants";
 import AppliedParticipants from "./AppliedParticipants";
 import SelectedParticipants from "./SelectedParticipants";
 import SortSelect from "./SortSelect";
+import { PageProps } from "@/types/next-helper";
 
 
 // type PageProps = {
@@ -11,10 +12,14 @@ import SortSelect from "./SortSelect";
 //   searchParams: Promise<{ sort?: string }>;
 // };
 
-const ParticipantProgressPage = async ({ params, searchParams }: {
-  params: { slug: string };
-  searchParams: Promise<{ sort?: string }>;
-}) => {
+const ParticipantProgressPage = async (
+     { params, searchParams }: PageProps<{ slug: string }, { sort?: string }>
+//     { params, searchParams }: {
+
+//   params: { slug: string };
+//   searchParams: Promise<{ sort?: string }>;
+// }
+) => {
 
     const { slug } = await params;
     const { sort } = await searchParams;

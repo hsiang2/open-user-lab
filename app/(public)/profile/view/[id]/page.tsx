@@ -11,13 +11,10 @@ import Link from "next/link";
 import Wall from "./Wall";
 import { getMyStudies, getThankYouCertificates } from "@/lib/actions/study.actions";
 import StudyList from "@/components/shared/study/studyList";
+import { PageParams } from "@/types/next-helper";
 
-const ProfilePage = async (props: {
-    params: Promise<{
-      id: string;
-    }>;
-  }) => {
-    const { id } = await props.params;
+const ProfilePage = async ({ params }: PageParams<{ id: string }>) => {
+    const { id } = await params;
     const session = await auth();
     const isCurrentUser = session?.user?.id === id;
     const user = await getUserById(id);
