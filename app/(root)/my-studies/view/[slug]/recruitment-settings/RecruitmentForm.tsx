@@ -1,6 +1,6 @@
 "use client";
 
-import { formatOptions } from "@/components/stepper-with-form.tsx";
+import { formatOptions } from "@/components/stepper-with-form";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";

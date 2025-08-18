@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Control, UseFormReturn, useFieldArray, useWatch } from "react-hook-form";
+import { UseFormReturn, useFieldArray, useWatch } from "react-hook-form";
 import { EvaluationType, QuestionType } from "@prisma/client";
 import { FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";

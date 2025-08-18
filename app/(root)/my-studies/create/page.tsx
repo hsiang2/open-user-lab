@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { StepperWithForm } from "@/components/stepper-with-form.tsx";
+import { StepperWithForm } from "@/components/stepper-with-form";
 
 const CreateStudyPage = async () => {
      const session = await auth();

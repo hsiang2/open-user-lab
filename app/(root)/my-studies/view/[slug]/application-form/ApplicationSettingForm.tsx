@@ -2,9 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { patchForm } from "@/lib/actions/participation.actions";
 import { formSchema, normalizedFormSchema } from "@/lib/validators";
@@ -13,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { EvaluationType, QuestionType, StudyStatus } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { Resolver, useFieldArray, useForm, UseFormReturn } from "react-hook-form";
+import { Resolver, useFieldArray, useForm } from "react-hook-form";
 import { QuestionEditor } from "./QuestionEditor";
 
 export function ApplicationSettingForm({ 

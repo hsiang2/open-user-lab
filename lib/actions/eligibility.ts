@@ -1,3 +1,6 @@
+import { EvalBreakdown } from "@/contracts/potential-participant";
+import { ProfileForEval } from "@/contracts/user";
+
 // lib/eligibility.ts
 export type Criterion = {
   type: "gender" | "language" | "region" | "background" | "birth";
@@ -56,21 +59,30 @@ export function match(type: string, wanted: string[], profileVal: unknown): bool
   return true;
 }
 
-export type MatchBreakdown = {
-  ok: boolean; // Required 是否全通過
-  requiredMatched: string[];
-  optionalMatched: string[];
-  missingRequired: string[];
-  missingOptional: string[];
-  requiredMismatches: string[];
-  optionalMismatches: string[];
-  score: number; // 排序用簡單分數
-};
+// export type MatchBreakdown = {
+//   ok: boolean; // Required 是否全通過
+//   requiredMatched: string[];
+//   optionalMatched: string[];
+//   missingRequired: string[];
+//   missingOptional: string[];
+//   requiredMismatches: string[];
+//   optionalMismatches: string[];
+//   score: number; // 排序用簡單分數
+// };
 
 export function evaluate(
-  profile: any,
+  profile: ProfileForEval | null,
   criteria: Criterion[]
-): MatchBreakdown {
+): EvalBreakdown {
+
+  const p: ProfileForEval = profile ?? {
+    gender: null,
+    language: [],
+    region: null,
+    background: [],
+    birth: null,
+  };
+
   const requiredMatched: string[] = [];
   const optionalMatched: string[] = [];
   const missingRequired: string[] = [];
@@ -79,7 +91,7 @@ export function evaluate(
   const optionalMismatches: string[] = [];
 
   for (const c of criteria) {
-    const pv = getProfileValue(profile, c.type);
+    const pv = getProfileValue(p, c.type);
     const missing = isPreferNotToSay(pv);
     const ok = match(c.type, c.value, pv);
 

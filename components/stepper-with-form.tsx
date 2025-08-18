@@ -262,8 +262,16 @@ const SessionForm = ({ showErrors }: Props) => {
 // 小工具：從巢狀物件用 "a.b.c" 取值
 // const getAt = (obj: any, path: string) =>
 //   path.split(".").reduce((o, k) => (o ? (o as any)[k] : undefined), obj);
-const getAt = <T,>(obj: T, path: string): unknown =>
-  path.split(".").reduce((o, k) => (o as any)?.[k], obj as any);
+// 不用 any、也不會觸發 no-explicit-any
+const getAt = (obj: unknown, path: string): unknown =>
+  path.split(".").reduce<unknown>((acc, key) => {
+    if (acc != null && typeof acc === "object") {
+      // 以 indexable 物件存取；陣列的 "0"、"1" 也會被當作 key
+      return (acc as Record<string, unknown>)[key];
+    }
+    return undefined;
+  }, obj);
+
 
 type CriteriaKey = "gender" | "background" | "region" | "language";
 

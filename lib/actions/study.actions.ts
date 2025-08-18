@@ -6,7 +6,7 @@ import { auth } from '@/auth';
 import { StudyCreatePayload } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { fullRecruitmentSchema, recruitmentGoalSchema } from '../validators';
-import z, { includes } from 'zod';
+import z from 'zod';
 import { STUDY_CARD_SELECT, STUDY_FOR_RESEARCHER_INCLUDE, StudyCard, StudyForResearcher } from '@/contracts/study';
 
 // Get latest study

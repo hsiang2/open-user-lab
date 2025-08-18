@@ -1,5 +1,7 @@
+import { Prisma } from "@prisma/client";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { ZodError } from "zod";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -14,34 +16,79 @@ export function slugify(name: string): string {
     .slice(0, 50);           
 }
 
-// Format errors
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function formatError(error: any) {
-  if (error.name === 'ZodError' && Array.isArray(error.issues)) {
-    // Handle Zod error (Zod v3+)
-    const messages = error.issues.map((issue: any) => issue.message);
-    return messages.join('. ');
-  // if (error.name === 'ZodError') {
-  //   // Handle Zod error
-  //   const fieldErrors = Object.keys(error.errors).map(
-  //     (field) => error.errors[field].message
-  //   );
+function capitalize(s: string) {
+  return s.length ? s[0].toUpperCase() + s.slice(1) : s;
+}
 
-  //   return fieldErrors.join('. ');
-  } else if (
-    error.name === 'PrismaClientKnownRequestError' &&
-    error.code === 'P2002'
-  ) {
-    // Handle Prisma error
-    const field = error.meta?.target ? error.meta.target[0] : 'Field';
-    return `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`;
-  } else {
-    // Handle other errors
-    return typeof error.message === 'string'
-      ? error.message
-      : JSON.stringify(error.message);
+export function formatError(error: unknown): string {
+  // Zod 驗證錯誤
+  if (error instanceof ZodError) {
+    const msgs = error.issues.map(i => i.message).filter(Boolean);
+    return msgs.length ? msgs.join(". ") : "Validation failed.";
+  }
+
+  // Prisma 已知錯誤（例如唯一鍵衝突 P2002）
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2002") {
+      // error.meta?.target 可能是欄位陣列
+      let field = "Field";
+      const meta = error.meta; // Record<string, unknown> | undefined
+      if (meta && typeof meta === "object" && "target" in meta) {
+        const t = (meta as { target?: unknown }).target;
+        if (Array.isArray(t) && t.length > 0) {
+          const first = t[0];
+          if (typeof first === "string" || typeof first === "number") {
+            field = String(first);
+          }
+        }
+      }
+      return `${capitalize(field)} already exists`;
+    }
+    // 其他 Prisma 錯誤代碼
+    return `Database error (${error.code}).`;
+  }
+
+  // 一般 Error
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  // 兜底：可序列化物件或原始型別
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
   }
 }
+
+// Format errors
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// export function formatError(error: any) {
+//   if (error.name === 'ZodError' && Array.isArray(error.issues)) {
+//     // Handle Zod error (Zod v3+)
+//     const messages = error.issues.map((issue: any) => issue.message);
+//     return messages.join('. ');
+//   // if (error.name === 'ZodError') {
+//   //   // Handle Zod error
+//   //   const fieldErrors = Object.keys(error.errors).map(
+//   //     (field) => error.errors[field].message
+//   //   );
+
+//   //   return fieldErrors.join('. ');
+//   } else if (
+//     error.name === 'PrismaClientKnownRequestError' &&
+//     error.code === 'P2002'
+//   ) {
+//     // Handle Prisma error
+//     const field = error.meta?.target ? error.meta.target[0] : 'Field';
+//     return `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`;
+//   } else {
+//     // Handle other errors
+//     return typeof error.message === 'string'
+//       ? error.message
+//       : JSON.stringify(error.message);
+//   }
+// }
 
 
 // 這些泛型只適用於 "as const" 的字串常量陣列

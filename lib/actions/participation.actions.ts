@@ -2,12 +2,14 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
-import { CheckResult } from "@/types";
+import { CheckResult, NormalizedFormPayload } from "@/types";
 import { Criterion, evaluate } from "./eligibility";
 import { CollaboratorRole, ParticipationStatus, QuestionType, RecruitmentStatus, StepStatus, StudyStatus } from "@prisma/client";
 import { normalizedFormSchema } from "../validators";
 import { revalidatePath } from "next/cache";import { redirect } from "next/navigation";
 import { mapParticipantStep, mapParticipationToProgressRow, mapStudyStep, PARTICIPANT_WORKFLOW_STEP_SELECT, ParticipantProgressRow, ParticipantWorkflowStepDTO, PARTICIPATION_PROGRESS_SELECT, STUDY_WORKFLOW_STEP_SELECT, StudyStepDTO, StudyStepStatusDTO } from "@/contracts/workflow";
+import { PROFILE_FOR_EVAL_SELECT } from "@/contracts/user";
+import { PotentialParticipantItem, USER_FOR_POTENTIAL_SELECT } from "@/contracts/potential-participant";
 ;
 
 export async function checkStudyEligibility(slug: string): Promise<CheckResult> {
@@ -48,7 +50,7 @@ export async function checkStudyEligibility(slug: string): Promise<CheckResult> 
   // 允許 profile 為 null，讓 evaluate 判定 missing
   const profile = await prisma.userProfile.findUnique({
     where: { userId },
-    select: { gender: true, language: true, region: true, background: true, birth: true },
+    select: { ...PROFILE_FOR_EVAL_SELECT },
   });
 
   const breakdown = evaluate(profile, study.criteria as Criterion[]);
@@ -417,10 +419,10 @@ export async function listAppliedParticipants(
 
    const sort = opts?.sort ?? "score_desc";
 
-  const getScore = (r: any) => Number(r.form?.totalScore ?? 0);
-  const getManualPass = (r: any) => Number(r.form?.manual?.counts?.pass ?? 0);
-  const getCriteria = (r: any) => Number(r.criteria?.score ?? 0);
-  const getAppliedAt = (r: any) => (r.appliedAt ? new Date(r.appliedAt).getTime() : 0);
+  const getScore = (r: AppliedParticipantRow) => Number(r.form?.totalScore ?? 0);
+  const getManualPass = (r: AppliedParticipantRow) => Number(r.form?.manual?.counts?.pass ?? 0);
+  const getCriteria = (r: AppliedParticipantRow) => Number(r.criteria?.score ?? 0);
+  const getAppliedAt = (r: AppliedParticipantRow) => (r.appliedAt ? new Date(r.appliedAt).getTime() : 0);
   const cmp = (n: number) => (n < 0 ? -1 : n > 0 ? 1 : 0);
 
   const rows = [...prevRows].sort((a, b) => {
@@ -941,7 +943,7 @@ export async function setStudyStepStatus(input: {
  
 // 依「Required criteria」建立 DB 過濾條件
 function buildRequiredWhere(criteria: Criterion[]) {
-  const ands: any[] = [];
+  const ands = [];
 
   for (const c of criteria) {
     if (c.matchLevel !== "Required") continue;
@@ -998,40 +1000,12 @@ function buildRequiredWhere(criteria: Criterion[]) {
     : { profile: { isNot: null } };
 }
 
-// function buildRequiredWhere(criteria: Criterion[]) {
-//   const ands: any[] = [];
-//   for (const c of criteria) {
-//     if (c.matchLevel !== "Required") continue;
-//     if (c.type === "gender") ands.push({ gender: { in: c.value } });
-//     else if (c.type === "region") ands.push({ region: { in: c.value } });
-//     else if (c.type === "language") ands.push({ language: { hasSome: c.value } });
-//     else if (c.type === "background") ands.push({ background: { hasSome: c.value } });
-//     else if (c.type === "birth") {
-//       const [minStr, maxStr] = c.value;
-//       const min = Number(minStr);
-//       const max = Number(maxStr);
-//       if (!isNaN(min) && !isNaN(max)) {
-//         const now = new Date();
-//         const start = new Date(now);
-//         start.setFullYear(now.getFullYear() - max - 1);
-//         start.setMonth(11, 31);
-//         const end = new Date(now);
-//         end.setFullYear(now.getFullYear() - min);
-//         ands.push({ birth: { gte: start, lte: end } });
-//       }
-//     }
-//   }
-//   return ands.length ? { profile: { AND: ands } } : { profile: { isNot: null } };
-// }
-
 // 1) 候選清單
 export async function listPotentialParticipantsForStudy(params: {
   slug: string;
   take?: number;
   cursor?: string;
-  // onlyEligible?: boolean;
-  // sortBy?: "best" | "newest";
-}) {
+}): Promise<{ items: PotentialParticipantItem[]; nextCursor?: string }>  {
   const { slug, take = 20, cursor, 
     // sortBy = "best" 
   } = params;
@@ -1065,44 +1039,35 @@ export async function listPotentialParticipantsForStudy(params: {
       id: { notIn: excluded },
       ...requiredWhere,
     },
-    select: {
-      id: true,
-      name: true,
-      // createdAt: true,
-      profile: {
-        select: { 
-          gender: true, 
-          language: true, 
-          region: true, 
-          background: true, 
-          birth: true, 
+     select: USER_FOR_POTENTIAL_SELECT,
+    // select: {
+    //   id: true,
+    //   name: true,
+    //   profile: {
+    //     select: { 
+    //        ...PROFILE_FOR_EVAL_SELECT,        
 
-          avatarBase : true, 
-          avatarAccessory: true, 
-          avatarBg: true, 
-        },
-      },
-    },
+    //       avatarBase : true, 
+    //       avatarAccessory: true, 
+    //       avatarBg: true, 
+    //     },
+    //   },
+    // },
     take: take + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
 
-  const items = users.map(u => {
+  const items: PotentialParticipantItem[]  = users.map(u => {
     const breakdown = evaluate(u.profile, study.criteria as Criterion[]);
     return {
       userId: u.id,
       name: u.name,
-      avatarBase : u.profile?.avatarBase, 
-      avatarAccessory: u.profile?.avatarAccessory, 
-      avatarBg: u.profile?.avatarBg, 
-      // createdAt: u.createdAt,
+      avatarBase : u.profile?.avatarBase ?? null, 
+      avatarAccessory: u.profile?.avatarAccessory ?? null, 
+      avatarBg: u.profile?.avatarBg ?? null, 
       breakdown,
     };
   });
-
-  // let list = items;
-  // if (onlyEligible) list = items.filter(x => x.breakdown.ok);
-
   items.sort((a, b) =>
     b.breakdown.score - a.breakdown.score
   );
@@ -1271,7 +1236,7 @@ export async function finalizeParticipantWithThankYou(args: {
 
 
 
-export async function patchForm(slug: string, payload: any) {
+export async function patchForm(slug: string, payload: NormalizedFormPayload) {
   const data = normalizedFormSchema.parse(payload); // 你前端已經在用的 transform
 
   return await prisma.$transaction(async (tx) => {

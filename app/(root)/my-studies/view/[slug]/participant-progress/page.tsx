@@ -1,7 +1,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import InvitedParticipants from "./InvitedParticipants";
-import { useStudy } from "../StudyProviderClient";
 import AppliedParticipants from "./AppliedParticipants";
 import SelectedParticipants from "./SelectedParticipants";
 import SortSelect from "./SortSelect";

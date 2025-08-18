@@ -82,7 +82,7 @@ const PotentialParticipantsPage = async ({ params, searchParams }: PageProps) =>
                         <form key={it.userId} action={inviteAction}>
                             <input type="hidden" name="userId" value={it.userId} />
                             <PotentialParticipantCard
-                                item={it as any}
+                                item={it}
                                 // onInvite={() => {}}
                                 // onSave={() => {}}
                                 // onView={() => {}}
