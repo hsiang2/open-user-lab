@@ -8,42 +8,129 @@ import { revalidatePath } from 'next/cache';
 import { fullRecruitmentSchema, recruitmentGoalSchema } from '../validators';
 import z from 'zod';
 import { STUDY_CARD_SELECT, STUDY_FOR_RESEARCHER_INCLUDE, StudyCard, StudyForResearcher } from '@/contracts/study';
+import { Prisma } from '@prisma/client';
+import { PROFILE_FOR_EVAL_SELECT, ProfileForEval } from '@/contracts/user';
+import { Criterion } from './eligibility';
 
 // Get latest study
-export async function getLatestStudies():Promise<StudyCard[]>  {
-    const data = await prisma.study.findMany({
-      where: {
-      status: 'ongoing', 
-      recruitmentStatus: 'open'
-    },
-        take: LATEST_STUDIES_LIMIT,
-        orderBy: { createdAt: 'desc' },
-        select: STUDY_CARD_SELECT,
-        // include: {
-        //   collaborators: {
-        //       select: {
-        //         id: true,
-        //         role: true,
-        //         user: {
-        //           select: {
-        //             id: true,
-        //             name: true,
-        //             profile: {
-        //               select: {
-        //                 avatarBase: true,
-        //                 avatarAccessory: true,
-        //                 avatarBg: true,
-        //               },
-        //             },
-        //           },
-        //         }
-        //       }
-        //     },
-        //   recruitment: true,
-        // },
-    })
-    
-    return data
+// export async function getLatestStudies():Promise<StudyCard[]>  {
+//     const data = await prisma.study.findMany({
+//       where: {
+//       status: 'ongoing', 
+//       recruitmentStatus: 'open'
+//     },
+//         take: LATEST_STUDIES_LIMIT,
+//         orderBy: { createdAt: 'desc' },
+//         select: STUDY_CARD_SELECT,
+//     })
+//     return data
+// }
+
+type ListExploreParams = {
+  q?: string;
+  take?: number;
+  cursor?: string; // 用 study.id 當 cursor
+};
+
+export async function listExplore({ q, take = 12, cursor }: ListExploreParams)
+: Promise<{ items: StudyCard[]; nextCursor?: string }> {
+  const where = {
+    status: "ongoing" as const,
+    recruitmentStatus: "open" as const,
+    ...(q?.trim()
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { recruitment: { is: { description: { contains: q, mode: "insensitive" } } } },
+          ],
+        }
+      : {}),
+  } satisfies Prisma.StudyWhereInput;
+
+  const rows = await prisma.study.findMany({
+    where,
+    select: STUDY_CARD_SELECT,
+    orderBy: { createdAt: "desc" },
+    take: take + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+
+  const hasMore = rows.length > take;
+  const items = rows.slice(0, take);
+  const nextCursor = hasMore ? items[items.length - 1]!.id : undefined; // 確保 STUDY_CARD_SELECT 有 id
+
+  return { items: items, nextCursor };
+}
+
+
+function meetsRequired(profile: ProfileForEval | null, criteria: Criterion[]) {
+  if (!criteria?.length) return true; // 沒設定就全部通過
+  const p = profile ?? { gender: null, language: [], region: null, background: [], birth: null };
+
+  // 只看 Required
+  for (const c of criteria) {
+    if (c.matchLevel !== "Required") continue;
+    switch (c.type) {
+      case "gender":
+        if (!p.gender || !c.value.includes(p.gender)) return false;
+        break;
+      case "region":
+        if (!p.region || !c.value.includes(p.region)) return false;
+        break;
+      case "background": {
+        if (!p.background?.length) return false;
+        // 至少有一個重疊
+        if (!p.background.some(b => c.value.includes(b))) return false;
+        break;
+      }
+      case "language": {
+        if (!p.language?.length) return false;
+        if (!p.language.some(l => c.value.includes(l))) return false;
+        break;
+      }
+      case "birth": {
+        // 你存的是 ["min","max"] 的年齡字串
+        const [minS, maxS] = c.value;
+        const min = Number(minS), max = Number(maxS);
+        if (!p.birth || Number.isNaN(min) || Number.isNaN(max)) return false;
+        const now = new Date();
+        const age = Math.floor((+now - +p.birth) / (365.25 * 24 * 3600 * 1000));
+        if (!(age >= min && age <= max)) return false;
+        break;
+      }
+    }
+  }
+  return true;
+}
+
+export async function listExploreMatched(params: ListExploreParams)
+: Promise<{ items: StudyCard[]; nextCursor?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    // 未登入：退回一般探索
+    return listExplore(params);
+  }
+
+  const profile = await prisma.userProfile.findUnique({
+    where: { userId: session.user.id },
+    select: PROFILE_FOR_EVAL_SELECT,
+  });
+
+  // 先抓一批，再用 JS 篩掉不合格（最小可行，之後可優化到 SQL）
+  const base = await prisma.study.findMany({
+    where: { status: "ongoing", recruitmentStatus: "open" },
+    select: { ...STUDY_CARD_SELECT, criteria: { select: { type: true, value: true, matchLevel: true } } },
+    orderBy: { createdAt: "desc" },
+    take: (params.take ?? 12) + 1,
+    ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
+  });
+
+  const filtered = base.filter(s => meetsRequired(profile, s.criteria as unknown as Criterion[]));
+  const items = filtered.slice(0, params.take ?? 12);
+  const nextCursor = filtered.length > (params.take ?? 12) ? items[items.length - 1]!.id : undefined;
+
+  // 丟掉 criteria 冗餘欄位（依你 StudyCard type 決定是否需要）
+  return { items: items.map(({ criteria, ...r }) => r as StudyCard), nextCursor };
 }
 
 export async function getMyStudies(userId: string):Promise<StudyCard[]>  {
