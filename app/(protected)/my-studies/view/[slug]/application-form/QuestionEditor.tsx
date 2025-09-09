@@ -15,11 +15,10 @@ export function QuestionEditor({
 }: {
   index: number;
   disabled: boolean;
-  form: UseFormReturn<FormValues>;   // ← 正確型別
+  form: UseFormReturn<FormValues>;  
 }) {
   const { control, getValues, setValue } = form;
 
-  // 安全使用 hooks
   const type = useWatch({ control, name: `form.${index}.type` });
   const evalType = useWatch({ control, name: `form.${index}.evaluationType` });
 
@@ -32,7 +31,7 @@ export function QuestionEditor({
     name: `form.${index}.options`,
   });
 
-  // 同步處理文字題與評分型別
+  // Text question and evaluation types
   useEffect(() => {
     if (type === QuestionType.text) {
       const opts = getValues(`form.${index}.options`);
@@ -61,7 +60,6 @@ export function QuestionEditor({
       <div className="
     flex justify-between gap-4
       ">
-      {/* grid grid-cols-1 md:grid-cols-3 gap-4 */}
         <FormField
           control={control}
           name={`form.${index}.required`}
@@ -150,10 +148,6 @@ export function QuestionEditor({
             <div key={opt.id} className="
             flex items-end justify-between "
             >
-              {/* <div className="
-            flex items-end justify-between m-0
-              "> */}
-                  {/* flex-1 grid grid-cols-[1fr_140px_auto] gap-3 */}
                 <FormField
                   control={control}
                   name={`form.${index}.options.${j}.text`}
@@ -198,7 +192,6 @@ export function QuestionEditor({
                 <Button type="button" variant="destructive" onClick={() => removeOption(j)} disabled={disabled}>
                   Delete
                 </Button>
-              {/* </div> */}
             </div>
           ))}
 

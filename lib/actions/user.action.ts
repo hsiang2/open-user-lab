@@ -102,11 +102,6 @@ export async function updateUserAvatar(data: AvatarInfo) {
   try {
     const session = await auth();
 
-    // const currentUser = await prisma.user.findFirst({
-    //   where: { id: session?.user?.id },
-    // });
-
-    // if (!currentUser) throw new Error('User not found');
     const currentUserId = session?.user?.id;
     if (!currentUserId) throw new Error('Unauthenticated');
 
@@ -137,43 +132,10 @@ export async function updateUserProfile(profileData: Profile) {
       const currentUserId = session?.user?.id;
     if (!currentUserId) throw new Error('Unauthenticated');
   
-    //   const currentUser = await prisma.user.findFirst({
-    //     where: { id: session?.user?.id },
-    //   });
-  
-    //   if (!currentUser) throw new Error('User not found');
-  
-    //   const rawBirth = formData.get('birth');
-
-    //   const profileData = userProfileSchema.parse({
-    //     birth: rawBirth ? new Date(rawBirth.toString()) : undefined,
-    //     gender: formData.get('gender') || undefined,
-    //     language: formData.getAll('language')
-    //         .map((l) => l.toString().trim())
-    //         .filter(Boolean),
-    //     website: formData.get('website')?.toString().trim() || undefined,
-    //     region: formData.get('region') || undefined,
-    //     background: formData.getAll('background')
-    //         .map((b) => b.toString().trim())
-    //         .filter(Boolean),
-    //     genderOther: formData.get('genderOther')?.toString().trim() || undefined,
-    //     languageOther: formData.get('languageOther')?.toString().trim() || undefined,
-    //     backgroundOther: formData.get('backgroundOther')?.toString().trim() || undefined,
-    // });
-  
       await prisma.userProfile.update({
             where: { userId: currentUserId }, 
             data: {
                 ...profileData
-                // birth:  profileData.birth,
-                // gender: profileData.gender,
-                // language: profileData.language,
-                // website: profileData.website,
-                // region: profileData.region,
-                // background: profileData.background,
-                // genderOther: profileData.genderOther,
-                // languageOther: profileData.languageOther,
-                // backgroundOther: profileData.backgroundOther,
             },
         });
   

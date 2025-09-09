@@ -12,7 +12,6 @@ export default async function StudyLayout({
    params: Promise<{ slug: string }>; 
 }) {
     const { slug } = await params;    
-    // const study = await getStudyForResearcher(slug);
     const studyRaw = await getStudyForResearcher(slug);
     if (!studyRaw) {
         redirect("/my-studies");

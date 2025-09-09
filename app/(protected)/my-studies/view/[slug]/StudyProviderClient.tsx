@@ -24,7 +24,7 @@ export function StudyProvider({
   children,
 }: {
   study: StudyForResearcher;
-  slug: string; // 若需要也可存起來
+  slug: string; 
   workflow: { studyId: string; steps: Step[]; statuses: Status[] };
   children: React.ReactNode;
 }) {

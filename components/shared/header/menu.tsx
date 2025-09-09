@@ -7,7 +7,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { getUserAvatar, signOutUser } from "@/lib/actions/user.action";
 import Avatar from "../avatar/Avatar";
 import { AvatarInfo } from "@/types";
-import { avatarSchema } from "@/lib/validators";
 
 const Menu = async () => {
     const session = await auth();
@@ -51,9 +50,6 @@ const Menu = async () => {
     }
 
     const avatar = await getUserAvatar(session.user.id) as AvatarInfo;
-    // const rawAvatar = await getUserAvatar(session.user.id);
-    // const avatar = avatarSchema.parse(rawAvatar);
-
 
     return ( 
         <div>
@@ -97,15 +93,6 @@ const Menu = async () => {
                             className='flex items-center ml-4'
                             >
                                 <Avatar width={50} background={avatar?.avatarBg} style={avatar?.avatarBase} accessory={avatar?.avatarAccessory}  />
-                                {/* <Button variant='ghost'>
-                                    { session.user?.name}
-                                </Button> */}
-                            {/* <Button
-                                variant='ghost'
-                                className='relativee w-8 h-8 rounded-full ml-2 flex items-center justify-center bg-gray-200'
-                            >
-                                {firstInitial}
-                            </Button> */}
                             </div>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className='w-56' align='end' forceMount>
@@ -185,12 +172,6 @@ const Menu = async () => {
                                     <Button variant='ghost'>
                                         { session.user?.name}
                                     </Button>
-                                {/* <Button
-                                    variant='ghost'
-                                    className='relativee w-8 h-8 rounded-full ml-2 flex items-center justify-center bg-gray-200'
-                                >
-                                    {firstInitial}
-                                </Button> */}
                                 </div>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className='w-56' align='end' forceMount>

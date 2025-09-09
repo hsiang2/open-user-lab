@@ -21,7 +21,6 @@ const ExplorePage = async(
     ? await listExploreMatched({ q, cursor, take: 12 })
     : await listExplore({ q, cursor, take: 12 });
 
-  // 組「更多」連結，要保留目前的 q / matched
   const nextHref = (() => {
     if (!nextCursor) return null;
     const qs = new URLSearchParams();

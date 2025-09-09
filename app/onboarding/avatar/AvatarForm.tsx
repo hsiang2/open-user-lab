@@ -53,9 +53,7 @@ const AvatarForm = ({
 
     return (  
         <div className="flex flex-col justify-center items-center">
-            <div className="flex flex-col items-center space-x-15 mb-20 sm:flex-row"
-            // className='space-y-4'
-            >
+            <div className="flex flex-col items-center space-x-15 mb-20 sm:flex-row">
                 <Avatar width={300} background={background} style={style} accessory={accessory} />
                 <div>
                     <h2 className="text-subtitle mb-5">Background</h2>
@@ -139,7 +137,6 @@ const AvatarForm = ({
             </div>
             <Button
                 className="w-fit"
-                // className='w-full'
                 disabled={isPending}
                 onClick={onSubmit}
               >

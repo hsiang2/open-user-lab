@@ -9,7 +9,6 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { signUpUser } from "@/lib/actions/user.action";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-// import { useSearchParams } from "next/navigation";
 
 const SignUpForm = () => {
     const [data, action] = useActionState(signUpUser, {
@@ -18,9 +17,6 @@ const SignUpForm = () => {
     })
 
     const [isResearcher, setIsResearcher] = useState("true");
-
-    // const searchParams = useSearchParams();
-    // const callbackUrl = searchParams.get('callbackUrl') || '/'
 
     const SignUpButton = () => {
         const { pending } = useFormStatus();
@@ -33,7 +29,6 @@ const SignUpForm = () => {
     }
     return ( 
         <form action={action}>
-            {/* <input type='hidden' name='callbackUrl' value={callbackUrl} /> */}
             <div className='space-y-6'>
                 <div>
                     <Label htmlFor='name'>Name</Label>

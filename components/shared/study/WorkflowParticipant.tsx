@@ -27,15 +27,12 @@ const WorkflowParticipant = (
             <div
                 className='flex flex-center w-[60px] h-[60px] rounded-full border-[3px] mr-2 border-[#4A877E]'
             >
-                {/* {done && ( */}
-                    <Image
+                <Image
                     src="/images/study/stamp.png" alt="stamp" width={50} height={50} 
                     className={cn("rounded-full object-cover object-center", 
                         done ? "opacity-100" : "opacity-10"
                     )}
-                    />
-                {/* )} */}
-                
+                />
             </div>
         </div>
     );

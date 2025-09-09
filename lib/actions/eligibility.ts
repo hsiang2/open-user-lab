@@ -1,7 +1,6 @@
 import { EvalBreakdown } from "@/contracts/potential-participant";
 import { ProfileForEval } from "@/contracts/user";
 
-// lib/eligibility.ts
 export type Criterion = {
   type: "gender" | "language" | "region" | "background" | "birth";
   value: string[];
@@ -58,17 +57,6 @@ export function match(type: string, wanted: string[], profileVal: unknown): bool
 
   return true;
 }
-
-// export type MatchBreakdown = {
-//   ok: boolean; // Required 是否全通過
-//   requiredMatched: string[];
-//   optionalMatched: string[];
-//   missingRequired: string[];
-//   missingOptional: string[];
-//   requiredMismatches: string[];
-//   optionalMismatches: string[];
-//   score: number; // 排序用簡單分數
-// };
 
 export function evaluate(
   profile: ProfileForEval | null,

@@ -1,4 +1,3 @@
-// app/(root)/recruitment/[slug]/ManualReviewDialog.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -8,15 +7,6 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { ManualDecision, updateManualDecisions } from "@/lib/actions/participation.actions";
 import { useRouter } from "next/navigation";
 
-// export type ManualAnswerItem = {
-//   answerId: string;
-//   questionId: string;
-//   questionText: string;
-//   manualDecision: ManualDecision;
-//   type: "text" | "single_choice" | "multiple_choice";
-//   textAnswer?: string | null;
-//   selectedOptions?: Array<{ id: string; text: string; score: number | null }>;
-// };
 const DECISIONS = ["Pass", "Fail", "Unsure"] as const;
 type Decision = (typeof DECISIONS)[number] | null;
 
@@ -43,7 +33,6 @@ export default function ManualReviewDialog({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  // 本地決策狀態（以 answerId 為 key）
   const [decisions, setDecisions] = useState<Record<string, ManualDecision>>(
     Object.fromEntries(answers.map(a => [a.answerId, a.manualDecision ?? "Unsure"]))
   );
@@ -59,7 +48,6 @@ export default function ManualReviewDialog({
 
     startTransition(async () => {
       await updateManualDecisions({ participationId, slug, decisions: payload });
-      // 關閉 + 重新整理以看到新數字
       setOpen(false);
       router.refresh();
     });

@@ -35,7 +35,7 @@ const ProfileForm = ({mode, profile, id}: {mode:'onboarding' | 'edit'; profile?:
     const [showOtherLanguage, setShowOtherLanguage] = useState(false);
     const [showOtherBackground, setShowOtherBackground] = useState(false);
        
-    // 1. Define your form.
+    // Define your form.
     const form = useForm({
         resolver: zodResolver(userProfileSchema),
         defaultValues: {
@@ -51,7 +51,7 @@ const ProfileForm = ({mode, profile, id}: {mode:'onboarding' | 'edit'; profile?:
         },
     })
     
-    // 2. Define a submit handler.
+    // Define a submit handler.
     const onSubmit = async (values: Profile) => {
         
         const trimmedGenderOther = values.genderOther?.trim();
@@ -173,22 +173,11 @@ const ProfileForm = ({mode, profile, id}: {mode:'onboarding' | 'edit'; profile?:
                                 <FormItem className="form-item">
                                 <FormLabel>Gender</FormLabel>
                                 <Select 
-                                    // onValueChange={field.onChange} defaultValue={field.value}
-                                    // value={field.value ?? ""}
-                                    // onValueChange={(value) => {
-                                    //     field.onChange(value);
-                                    //     setShowOtherGender(value === "Other");
-                                    // }}
                                    defaultValue={profile?.gender as typeof GENDERS[number]}
                                     onValueChange={(value) => {
                                         form.setValue("gender", value as typeof GENDERS[number]);
                                         setShowOtherGender(value === "Other");
-
-                                        // if (value !== "Other") {
-                                        //     form.setValue("genderOther", ""); 
-                                        // }
                                     }}
-                                    
                                 >
                                     <FormControl className="w-full">
                                     <SelectTrigger>
@@ -201,9 +190,6 @@ const ProfileForm = ({mode, profile, id}: {mode:'onboarding' | 'edit'; profile?:
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {/* <FormDescription>
-                                    You can manage email addresses in your{" "}
-                                </FormDescription> */}
                                 <FormMessage />
                                 </FormItem>
                             )}
@@ -243,9 +229,6 @@ const ProfileForm = ({mode, profile, id}: {mode:'onboarding' | 'edit'; profile?:
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {/* <FormDescription>
-                                    You can manage email addresses in your{" "}
-                                </FormDescription> */}
                                 <FormMessage />
                                 </FormItem>
                             )}
@@ -262,7 +245,6 @@ const ProfileForm = ({mode, profile, id}: {mode:'onboarding' | 'edit'; profile?:
                                     <MultipleSelector
                                         value={languageOptions.filter(opt =>  (field.value as string[])?.includes(opt.value))}
                                         onChange={(selected: Option[]) => {
-                                            // const values = selected.map(opt => opt.value);
                                             let values = selected.map(opt => opt.value);
 
                                             const includesPreferNot = values.includes("Prefer not to say");
@@ -280,11 +262,7 @@ const ProfileForm = ({mode, profile, id}: {mode:'onboarding' | 'edit'; profile?:
 
                                             field.onChange(values);
                                             setShowOtherLanguage(values.includes("Other"));
-                                            // if (!values.includes("Other")) {
-                                            //     form.setValue("languageOther", "");
-                                            // }
                                         }}
-                                        // {...field}
                                         defaultOptions={languageOptions}
                                         placeholder="Select your languages"
                                         emptyIndicator={
@@ -323,7 +301,6 @@ const ProfileForm = ({mode, profile, id}: {mode:'onboarding' | 'edit'; profile?:
                                     <MultipleSelector
                                         value={backgroundOptions.filter(opt =>  (field.value as string[])?.includes(opt.value))}
                                         onChange={(selected: Option[]) => {
-                                            // const values = selected.map(opt => opt.value);
                                             let values = selected.map(opt => opt.value);
 
                                             const includesPreferNot = values.includes("Prefer not to say");
@@ -341,11 +318,7 @@ const ProfileForm = ({mode, profile, id}: {mode:'onboarding' | 'edit'; profile?:
 
                                             field.onChange(values);
                                             setShowOtherBackground(values.includes("Other"));
-                                            // if (!values.includes("Other")) {
-                                            //     form.setValue("backgroundOther", "");
-                                            // }
                                         }}
-                                        // {...field}
                                         defaultOptions={backgroundOptions}
                                         placeholder="Select your background"
                                         emptyIndicator={
@@ -383,17 +356,12 @@ const ProfileForm = ({mode, profile, id}: {mode:'onboarding' | 'edit'; profile?:
                                 <FormControl className="w-full">
                                     <Input placeholder="e.g. https://www.linkedin.com/in/your-name" {...field} />
                                 </FormControl>
-                                {/* <FormDescription>
-                                    This is your public display name.
-                                </FormDescription> */}
                                 <FormMessage />
                                 </FormItem>
                             )}
                         />
                     </div>
                 </div>
-                
-                
                 
                 <Button 
                     type="submit"

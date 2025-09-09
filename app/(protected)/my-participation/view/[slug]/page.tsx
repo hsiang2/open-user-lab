@@ -1,4 +1,3 @@
-// app/my-participation/[slug]/page.tsx (Server)
 import Avatar from "@/components/shared/avatar/Avatar";
 import StudyImage from "@/components/shared/image/StudyImage";
 import WorkflowParticipant from "@/components/shared/study/WorkflowParticipant";
@@ -23,7 +22,6 @@ export default async function MyParticipationDetailPage({ params }: PageParams<{
               </TabsList>
 
               <TabsContent value="progress" className="mt-4">
-                {/* 這裡畫 chips/steps，或用你之前的 SelectedTableClient 簡化版 */}
                 <div className="flex flex-col gap-10 my-8">
                   {data.progress.steps.map((st) => {
                     const s = data.progress.statuses.find(x => x.stepId === st.id);
@@ -100,6 +98,5 @@ export default async function MyParticipationDetailPage({ params }: PageParams<{
               </TabsContent>
             </Tabs>
         </div>
-
   );
 }

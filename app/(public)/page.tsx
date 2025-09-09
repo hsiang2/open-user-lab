@@ -1,5 +1,3 @@
-// const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 

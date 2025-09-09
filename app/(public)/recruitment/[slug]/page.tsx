@@ -16,17 +16,8 @@ import { PageProps } from "@/types/next-helper";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CopyLinkButton } from "./CopyLinkButton";
 
-// type PageProps = {
-//   params: { slug: string };
-//   searchParams: Promise<{ applied?: string; dup?: string; error?: string }>;
-// };
-
 const StudyDetailsRecruitmentPage = async (
     { params, searchParams }: PageProps<{ slug: string }, { applied?: string; dup?: string; error?: string }>
-//     { params, searchParams }: {
-//   params: { slug: string };
-//   searchParams: Promise<{ applied?: string; dup?: string; error?: string }>;
-// }
 ) => {
      const { slug } = await params;            
   const { applied, dup, error } = await searchParams; 
@@ -166,10 +157,6 @@ const StudyDetailsRecruitmentPage = async (
                         </div>
                     </DialogContent>
                 </Dialog>
-                 {/* TODO */}
-                {/* <Button disabled={!userId || !(study.status==='ongoing')} variant="secondary" type="button">
-                    Save
-                </Button> */}
                 <ApplyButton slug={slug} disabled={!userId || (study.recruitmentStatus === 'closed') || !!existingParticipation} />
             </div>
         </div>

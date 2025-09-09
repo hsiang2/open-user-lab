@@ -1,7 +1,5 @@
-// contracts/workflow.ts
 import type { Prisma, ParticipationStatus, StepStatus } from "@prisma/client";
 
-/** 參與者流程（ParticipantWorkflow）— 步驟清單需要的欄位 */
 export const PARTICIPANT_WORKFLOW_STEP_SELECT = {
   id: true,
   name: true,
@@ -34,7 +32,6 @@ export function mapParticipantStep(s: ParticipantWorkflowStepRaw): ParticipantWo
   };
 }
 
-/** 參與者在各步驟上的進度（把 Participation 攤平成每步狀態） */
 export const PARTICIPATION_PROGRESS_SELECT = {
   id: true,
   status: true,
@@ -51,7 +48,6 @@ export type ParticipantProgressRow = {
   participationId: string;
   participationStatus: ParticipationStatus;
   user: { id: string; name: string | null };
-  /** 依所有步驟順序排好的狀態列表 */
   statuses: Array<{
     stepId: string;
     statusId?: string;
@@ -85,8 +81,6 @@ export function mapParticipationToProgressRow(
 }
 
 
-
-/** StudyWorkflow 的步驟欄位（給列表/設定頁用） */
 export const STUDY_WORKFLOW_STEP_SELECT = {
   id: true,
   name: true,
@@ -112,7 +106,7 @@ export type StudyStepStatusDTO = {
   status: StepStatus; // "todo" | "completed"
 };
 
-/** Raw -> DTO（把 Date 轉 ISO） */
+/** Raw -> DTO（Date to ISO） */
 export function mapStudyStep(raw: StudyStepRaw): StudyStepDTO {
   return {
     id: raw.id,

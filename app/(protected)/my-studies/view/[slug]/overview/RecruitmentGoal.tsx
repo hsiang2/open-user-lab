@@ -25,7 +25,6 @@ export function RecruitmentGoal({ slug }: { slug: string }) {
 
   const [isPending, start] = useTransition();
 
-  // debounce 數字更新
   const commitNumber = useDebouncedCallback(
     (key: "selected" | "applicants", value: string) => {
       const v = value === "" ? null : Math.max(1, Number(value));

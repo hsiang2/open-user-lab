@@ -1,4 +1,3 @@
-// app/recruitment/[slug]/InviteBanner.tsx
 "use client";
 
 import { useTransition } from "react";

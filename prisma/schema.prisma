@@ -431,3 +431,6 @@ enum ManualDecision {
 }
 
 
+// generator erd {
+//   provider = "prisma-erd-generator"
+// }

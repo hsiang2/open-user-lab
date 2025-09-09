@@ -1,7 +1,5 @@
 'use server'
 
-import { z } from 'zod';
-import { insertCriteria } from '@/lib/validators';
 import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
 import { CheckResult, NormalizedFormPayload } from "@/types";
@@ -49,7 +47,6 @@ export async function checkStudyEligibility(slug: string): Promise<CheckResult> 
     };
   }
 
-  // 允許 profile 為 null，讓 evaluate 判定 missing
   const profile = await prisma.userProfile.findUnique({
     where: { userId },
     select: { ...PROFILE_FOR_EVAL_SELECT },
@@ -79,7 +76,6 @@ export async function checkStudyEligibility(slug: string): Promise<CheckResult> 
     missingOptional,
     requiredMismatches,
     optionalMismatches,
-    // 保持與既有型別一致：這裡不回傳 score/requiredMatched 等前端用不到的欄位
   };
 }
 
@@ -97,14 +93,14 @@ export async function applyDirectly(slug: string) {
     throw new Error("Recruitment is not open");
   }
 
-  // 不重複申請
+  // Avoid duplicate
   const existed = await prisma.participation.findFirst({
     where: { userId, studyId: study.id },
     select: { id: true },
   });
   if (existed) return { ok: true, already: true };
 
-  // 建立 participation
+  // Create participation
   await prisma.participation.create({
     data: {
       userId,
@@ -114,7 +110,7 @@ export async function applyDirectly(slug: string) {
     },
   });
 
-  // 看看是否有 pending 邀請
+  // Check if there is pending invitation
   const inv = await prisma.invitation.findFirst({
     where: { studyId: study.id, userId, status: "pending" },
     select: { id: true },
@@ -135,13 +131,12 @@ export async function declineInvitationById(invitationId: string) {
   const userId = session?.user?.id;
   if (!userId) throw new Error("Unauthenticated");
 
-  // 只允許本人操作自己的邀請
   const inv = await prisma.invitation.findUnique({
     where: { id: invitationId },
     select: { userId: true, status: true },
   });
   if (!inv || inv.userId !== userId) throw new Error("Not allowed");
-  if (inv.status !== "pending") return { ok: true }; // 已處理過
+  if (inv.status !== "pending") return { ok: true }; 
 
   await prisma.invitation.update({
     where: { id: invitationId },
@@ -152,7 +147,6 @@ export async function declineInvitationById(invitationId: string) {
 }
 
 // Get participants progress
-
 export async function listInvitationsForStudy(slug: string) {
   const study = await prisma.study.findUnique({ where: { slug }, select: { id: true } });
   if (!study) return [];
@@ -193,14 +187,14 @@ export type AppliedParticipantRow = {
     } | null;
   };
 
-  // Criteria breakdown 直接丟前端，讓你畫 v / x / ? 或打開彈窗看細節
+  // Criteria breakdown 
   criteria: ReturnType<typeof evaluate>;
 
-  // 問卷部分（可能整個空，因為 allow no-form）
+  // Form（allow no-form）
   form: {
     responseId: string | null;
     submittedAt: Date | null;
-    totalScore: number; // 沒表單=0
+    totalScore: number; 
     manual: {
       counts: { pass: number; fail: number; unsure: number; total: number };
       answers: Array<{
@@ -220,7 +214,7 @@ export type AppliedParticipantRow = {
         questionText: string;
         type: "single_choice" | "multiple_choice";
         selectedOptions: Array<{ id: string; text: string; score: number | null }>;
-        questionScore: number; // 這一題加總
+        questionScore: number; 
       }>;
     };
     unscored: {
@@ -318,12 +312,12 @@ export async function listAppliedParticipants(
     const resp = p.formResponses[0] ?? null;
     const answers = resp?.answers ?? [];
 
-    // 分三類
+    // Three types by evaluation
     const manualAnswers = answers.filter(a => a.question.evaluationType === "manual");
     const scoredAnswers = answers.filter(a => a.question.evaluationType === "automatic");
     const unscoredAnswers = answers.filter(a => a.question.evaluationType === "none");
 
-    // 手動審核計數
+    // Manually reviewed counts
     const manualCounts = {
       pass: manualAnswers.filter(a => a.manualDecision === "Pass").length,
       fail: manualAnswers.filter(a => a.manualDecision === "Fail").length,
@@ -331,7 +325,7 @@ export async function listAppliedParticipants(
       total: manualAnswers.length,
     };
 
-    // 自動評分：以 response.totalScore 為主，沒有就用選項分數加總
+    //Automatic scored： use response.totalScore first
     const fallbackScore = scoredAnswers.reduce((sum, a) => {
       const s = a.selectedOptions.reduce((s2, sel) => s2 + (sel.option.score ?? 0), 0);
       return sum + s;
@@ -473,14 +467,14 @@ export async function updateManualDecisions(input: {
   const userId = session?.user?.id;
   if (!userId) throw new Error("Unauthenticated");
 
-  // 找到 participation → studyId
+  // Find participation, get studyId
   const part = await prisma.participation.findUnique({
     where: { id: input.participationId },
     select: { studyId: true },
   });
   if (!part) throw new Error("Participation not found");
 
-  // 權限：必須是 owner/editor
+  // Permission: must be owner/editor
   const collab = await prisma.collaborator.findFirst({
     where: { studyId: part.studyId, userId, role: { in: ["owner", "editor"] } },
     select: { id: true },
@@ -533,102 +527,6 @@ export async function listSelectedParticipantProgress(slug: string): Promise<{
   return { steps, progress };
 }
 
-// export type WorkflowStepDTO = {
-//   id: string;
-//   name: string;
-//   order: number;
-//   noteResearcher: string | null;
-//   noteParticipant: string | null;
-//   deadline: string | null; // ISO
-// };
-
-// export type RowDTO = {
-//   participationId: string;
-//   participationStatus: ParticipationStatus;
-//   user: { id: string; name: string | null };
-//   statuses: Array<{
-//     stepId: string;
-//     statusId?: string;
-//     status: StepStatus;
-//     completedAt?: string | null;
-//   }>;
-// };
-
-// export async function listSelectedWithWorkflow(slug: string): Promise<{
-//   steps: WorkflowStepDTO[];
-//   rows: RowDTO[];
-// }> {
-//   const session = await auth();
-//   if (!session?.user?.id) throw new Error("Unauthenticated");
-
-//   const study = await prisma.study.findUnique({
-//     where: { slug },
-//     select: {
-//       id: true,
-//       participantWorkflow: {
-//         select: {
-//           steps: {
-//             select: {
-//               id: true,
-//               name: true,
-//               order: true,
-//               noteResearcher: true,
-//               noteParticipant: true,
-//               deadline: true,
-//             },
-//             orderBy: { order: "asc" },
-//           },
-//         },
-//       },
-//     },
-//   });
-//   if (!study) throw new Error("Study not found");
-
-//   const steps: WorkflowStepDTO[] =
-//     (study.participantWorkflow?.steps ?? []).map(s => ({
-//       id: s.id,
-//       name: s.name,
-//       order: s.order,
-//       noteResearcher: s.noteResearcher ?? null,
-//       noteParticipant: s.noteParticipant ?? null,
-//       deadline: s.deadline ? s.deadline.toISOString() : null,
-//     }));
-
-//   const parts = await prisma.participation.findMany({
-//     where: { studyId: study.id, status: { in: ["Selected", "Completed"] } },
-//     select: {
-//       id: true,
-//       status: true,
-//       user: { select: { id: true, name: true } },
-//       workflowStepStatuses: {
-//         select: { id: true, status: true, completedAt: true, stepId: true },
-//       },
-//     },
-//     orderBy: { updatedAt: "desc" },
-//   });
-
-//   const rows: RowDTO[] = parts.map(p => {
-//     const map = new Map(p.workflowStepStatuses.map(s => [s.stepId, s]));
-//     const statuses = steps.map(st => {
-//       const hit = map.get(st.id);
-//       return hit
-//         ? {
-//             stepId: st.id,
-//             statusId: hit.id,
-//             status: hit.status,
-//             completedAt: hit.completedAt?.toISOString() ?? null,
-//           }
-//         : { stepId: st.id, status: "todo" as StepStatus };
-//     });
-//     return { participationId: p.id, participationStatus: p.status, user: p.user, statuses };
-//   });
-
-//   return { steps, rows };
-// }
-
-
-
-
 export async function setParticipantStepStatus(params: {
   participationId: string;
   stepId: string;
@@ -639,7 +537,7 @@ export async function setParticipantStepStatus(params: {
 
   const { participationId, stepId, status } = params;
 
-  // 先找有沒有現成的 status 記錄
+  // Find existing status
   const exist = await prisma.participantWorkflowStepStatus.findFirst({
     where: { participationId, stepId },
     select: { id: true },
@@ -687,7 +585,7 @@ export async function getStudyWorkflowForSlug(slug: string): Promise<{
 
   if (!study) throw new Error("Study not found");
 
-  // 還沒建立 workflow → 回傳空
+  // No workflow, return empty
   if (!study.studyWorkflow) {
     return { studyId: study.id, steps: [], statuses: [] };
   }
@@ -695,14 +593,14 @@ export async function getStudyWorkflowForSlug(slug: string): Promise<{
   const steps: StudyStepDTO[] = study.studyWorkflow.steps.map(mapStudyStep);
   const stepIds = steps.map(s => s.id);
 
-  // 取現有狀態
+  // Get current status
   const existed = await prisma.studyWorkflowStepStatus.findMany({
     where: { studyId: study.id },
     select: { stepId: true, status: true },
   });
   const existedMap = new Map(existed.map(x => [x.stepId, x.status]));
 
-  // 補缺的狀態 → 建立為 todo（保留你原來邏輯）
+  // Fill in missing status
   const missing = stepIds.filter(id => !existedMap.has(id));
   if (missing.length) {
     await prisma.studyWorkflowStepStatus.createMany({
@@ -715,7 +613,7 @@ export async function getStudyWorkflowForSlug(slug: string): Promise<{
     });
   }
 
-  // 組合輸出（保證每個 step 都有一筆）
+  // Combine and return（Make sure every step exist）
   const statuses: StudyStepStatusDTO[] = stepIds.map(stepId => ({
     stepId,
     status: existedMap.get(stepId) ?? "todo",
@@ -724,107 +622,26 @@ export async function getStudyWorkflowForSlug(slug: string): Promise<{
   return { studyId: study.id, steps, statuses };
 }
 
-
-// export type StudyStepDTO = {
-//   id: string;
-//   name: string;
-//   order: number;
-//   note: string | null;
-//   deadline: string | null; // ISO
-// };
-
-// export type StudyStepStatusDTO = {
-//   stepId: string;
-//   status: "todo" | "completed";
-// };
-
-// export async function getStudyWorkflowForSlug(slug: string): Promise<{
-//   studyId: string;
-//   steps: StudyStepDTO[];
-//   statuses: StudyStepStatusDTO[];
-// }> {
-//   const study = await prisma.study.findUnique({
-//     where: { slug },
-//     select: {
-//       id: true,
-//       slug: true,
-//       studyWorkflow: {
-//         include: {
-//           steps: { orderBy: { order: "asc" } },
-//         },
-//       },
-//     },
-//   });
-
-//   if (!study) throw new Error("Study not found");
-
-//   // 可能還沒建立 studyWorkflow → 回傳空
-//   if (!study.studyWorkflow) {
-//     return { studyId: study.id, steps: [], statuses: [] };
-//   }
-
-//   const steps = study.studyWorkflow.steps.map<StudyStepDTO>((s) => ({
-//     id: s.id,
-//     order: s.order,
-//     name: s.name,
-//     note: s.note ?? null,
-//     deadline: s.deadline ? s.deadline.toISOString() : null,
-//   }));
-
-//   // 取現有狀態
-//   const existed = await prisma.studyWorkflowStepStatus.findMany({
-//     where: { studyId: study.id },
-//     select: { stepId: true, status: true },
-//   });
-//   const existedMap = new Map(existed.map((x) => [x.stepId, x.status]));
-
-//   // 找出缺的狀態 → 建立為 todo
-//   const missing = steps.filter((s) => !existedMap.has(s.id));
-//   if (missing.length) {
-//     await prisma.studyWorkflowStepStatus.createMany({
-//       data: missing.map((m) => ({
-//         studyId: study.id,
-//         stepId: m.id,
-//         status: "todo",
-//         completedAt: null,
-//       })),
-//     });
-//   }
-
-//   // 重新組合（保證每個 step 都有一筆）
-//   const statuses: StudyStepStatusDTO[] = steps.map((s) => ({
-//     stepId: s.id,
-//     status: (existedMap.get(s.id) ?? "todo") as "todo" | "completed",
-//   }));
-
-//   return { studyId: study.id, steps, statuses };
-// }
-
-
-// 切換 study workflow 的步驟狀態
 export async function setStudyStepStatus(input: {
   studyId: string;
   stepId: string;
   status: "todo" | "completed";
-  revalidateTo?: string; // e.g. `/recruitment/[slug]`
+  revalidateTo?: string;
 }) {
-  "use server"; // ← 如果要在 client 直接 import 這個函式呼叫，務必加在函式內
 
   const { studyId, stepId, status, revalidateTo } = input;
 
-  // 1) 認證
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) throw new Error("Unauthenticated");
 
-  // 2) 權限：owner/editor 才能改
   const collab = await prisma.collaborator.findFirst({
     where: { studyId, userId, role: { in: ["owner", "editor"] } },
     select: { id: true },
   });
   if (!collab) throw new Error("Not allowed");
 
-  // 3) 防呆：確認 stepId 屬於此 study 的 workflow
+  // Safety check
   const step = await prisma.studyWorkflowStep.findUnique({
     where: { id: stepId },
     select: { workflow: { select: { studyId: true } } },
@@ -833,7 +650,7 @@ export async function setStudyStepStatus(input: {
     throw new Error("Invalid step");
   }
 
-  // 4) upsert（無複合 unique 的情況下：先查再決定 update/create）
+  // upsert（update/create）
   const existing = await prisma.studyWorkflowStepStatus.findFirst({
     where: { stepId, studyId },
     select: { id: true },
@@ -844,7 +661,7 @@ export async function setStudyStepStatus(input: {
 
   if (existing) {
     await prisma.studyWorkflowStepStatus.update({
-      where: { id: existing.id }, // 只能用唯一鍵 id
+      where: { id: existing.id }, 
       data: { status, completedAt },
     });
   } else {
@@ -858,92 +675,9 @@ export async function setStudyStepStatus(input: {
   return { ok: true };
 }
 
-//之後補測：
-// export async function updateWorkflowStepMeta(params: {
-//   stepId: string;
-//   noteResearcher?: string | null;
-//   noteParticipant?: string | null;
-//   deadline?: string | null; // ISO or null
-// }) {
-//   const session = await auth();
-//   if (!session?.user?.id) throw new Error("Unauthenticated");
-
-//   const { stepId, noteResearcher, noteParticipant, deadline } = params;
-
-//   await prisma.participantWorkflowStep.update({
-//     where: { id: stepId },
-//     data: {
-//       noteResearcher: noteResearcher ?? undefined,
-//       noteParticipant: noteParticipant ?? undefined,
-//       deadline: typeof deadline === "string" ? new Date(deadline) : deadline === null ? null : undefined,
-//     },
-//   });
-
-//   return { ok: true };
-// }
-
-
-
-// export async function listAppliedParticipants( slug: string) {
-//   const study = await prisma.study.findUnique({
-//     where: { slug },
-//     select: { id: true },
-//   });
-//   if (!study) throw new Error("Study not found");
-
-//   return prisma.participation.findMany({
-//     where: {
-//       studyId: study.id,
-//       status: "Applied",
-//     },
-//     select: {
-//       id: true,
-//       status: true,
-//       appliedAt: true,
-//       updatedAt: true,
-//       user: { select: { id: true, name: true } },
-//       formResponses: {
-//         select: {
-//           id: true,
-//           submittedAt: true,
-//           answers: {
-//             select: {
-//               id: true,
-//               text: true,
-//               question: {
-//                 select: {
-//                   id: true,
-//                   text: true,
-//                   evaluationType: true,
-//                   options: { select: { id: true, text: true, score: true } },
-//                 },
-//               },
-//               selectedOptions: {
-//                 select: { option: { select: { id: true, text: true, score: true } } },
-//               },
-//             },
-//           },
-//         },
-//       },
-//     },
-//     orderBy: { updatedAt: "desc" },
-//     // take: take + 1,
-//     // ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-//   });
-
-//   // const items = rows.slice(0, take);
-//   // const nextCursor = rows.length > take ? items[items.length - 1].id : undefined;
-
-//   // return { items, nextCursor };
-// }
-
-
-
-
-
 //Get potential participants
  
-// 依「Required criteria」建立 DB 過濾條件
+// based on Required criteria
 function buildRequiredWhere(criteria: Criterion[]) {
   const ands = [];
 
@@ -974,43 +708,36 @@ function buildRequiredWhere(criteria: Criterion[]) {
 
         if (!Number.isNaN(min) && !Number.isNaN(max)) {
           const now = new Date();
-          // 年齡 max 對應的最老生日起點
           const oldest = new Date(now);
           oldest.setFullYear(now.getFullYear() - max - 1);
           oldest.setMonth(11, 31);
-          // 年齡 min 對應的最年輕生日終點
+
           const youngest = new Date(now);
           youngest.setFullYear(now.getFullYear() - min);
           ands.push({ birth: { gte: oldest, lte: youngest } });
         } else {
-          // 邊界無法解析，至少要求「有填生日」
           ands.push({ birth: { not: null } });
         }
         break;
       }
 
       default:
-        // 未實作的 Required 類型，至少要求「有填」，避免放進候選名單
         ands.push({ [c.type]: { not: null } });
         break;
     }
   }
 
-  // 若沒有任何 Required，至少要求有 profile
   return ands.length
     ? { profile: { is: { AND: ands } } }
     : { profile: { isNot: null } };
 }
 
-// 1) 候選清單
 export async function listPotentialParticipantsForStudy(params: {
   slug: string;
   take?: number;
   cursor?: string;
 }): Promise<{ items: PotentialParticipantItem[]; nextCursor?: string }>  {
-  const { slug, take = 20, cursor, 
-    // sortBy = "best" 
-  } = params;
+  const { slug, take = 20, cursor } = params;
 
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthenticated");
@@ -1024,7 +751,7 @@ export async function listPotentialParticipantsForStudy(params: {
   });
   if (!study) throw new Error("Study not found");
 
-  // 排除已在案或已邀的人
+  // Exclude pending or applied 
   const [ps, invs] = await Promise.all([
     prisma.participation.findMany({ where: { studyId: study.id }, select: { userId: true } }),
     prisma.invitation.findMany({
@@ -1042,19 +769,6 @@ export async function listPotentialParticipantsForStudy(params: {
       ...requiredWhere,
     },
      select: USER_FOR_POTENTIAL_SELECT,
-    // select: {
-    //   id: true,
-    //   name: true,
-    //   profile: {
-    //     select: { 
-    //        ...PROFILE_FOR_EVAL_SELECT,        
-
-    //       avatarBase : true, 
-    //       avatarAccessory: true, 
-    //       avatarBg: true, 
-    //     },
-    //   },
-    // },
     take: take + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
@@ -1080,7 +794,6 @@ export async function listPotentialParticipantsForStudy(params: {
   return { items: page, nextCursor };
 }
 
-// 2) 邀請某使用者
 export async function inviteUserToStudy(slug: string, userId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthenticated");
@@ -1107,33 +820,6 @@ export async function inviteUserToStudy(slug: string, userId: string) {
   return { ok: true, already: false };
 }
 
-// // 3) 參與者清單
-// export async function listParticipantsForStudy(slug: string) {
-//   const study = await prisma.study.findUnique({ where: { slug }, select: { id: true } });
-//   if (!study) throw new Error("Study not found");
-
-//   const [applied, active] = await Promise.all([
-//     prisma.participation.findMany({
-//       where: { studyId: study.id, status: { in: ["Applied"] } },
-//       select: { id: true, status: true, appliedAt: true,  updatedAt: true, user: { select: { id: true, name: true } } },
-//       orderBy: { updatedAt: "desc" },
-//     }),
-//     // prisma.invitation.findMany({
-//     //   where: { studyId: study.id, status: "pending" },
-//     //   select: { id: true, status: true, createdAt: true, user: { select: { id: true, name: true } } },
-//     //   orderBy: { createdAt: "desc" },
-//     // }),
-//     prisma.participation.findMany({
-//       where: { studyId: study.id, status: { in: ["Selected", "Completed"] } },
-//       select: { id: true, status: true, updatedAt: true, user: { select: { id: true, name: true } } },
-//       orderBy: { updatedAt: "desc" },
-//     }),
-//   ]);
-
-//   return { applied, active };
-// }
-
-// 4) 更新參與狀態
 export async function updateParticipationStatus(id: string, next:
   ParticipationStatus) {
   const session = await auth();
@@ -1154,7 +840,6 @@ export async function finalizeParticipantWithThankYou(args: {
   const actorId = session?.user?.id;
   if (!actorId) throw new Error("Unauthenticated");
 
-  // 取 participation + 權限必要資料
   const p = await prisma.participation.findUnique({
     where: { id: args.participationId },
     select: {
@@ -1184,10 +869,9 @@ export async function finalizeParticipantWithThankYou(args: {
   });
   if (!p) throw new Error("Participation not found");
 
-  // 權限：僅研究協作者
+  // Permission
   if (p.study.collaborators.length === 0) throw new Error("Not allowed");
 
-  // 研究者資訊（名字、頭像）
   const researcher = await prisma.user.findUnique({
     where: { id: actorId },
     select: {
@@ -1196,14 +880,13 @@ export async function finalizeParticipantWithThankYou(args: {
     },
   });
 
-  // 同一個交易：upsert 感謝卡 + 將參與者結案
   const result = await prisma.$transaction(async (tx) => {
     const cert = await tx.thankYouCertificate.upsert({
       where: { participationId: p.id },
       update: {
         message: p.study.recruitment?.thankYouMessage ?? null,
         image: p.study.recruitment?.image ?? null,
-        // 最新頭像（若對象更新過）
+
         avatarBaseParticipant: p.user.profile?.avatarBase ?? null,
         avatarAccessoryParticipant: p.user.profile?.avatarAccessory ?? null,
         avatarBaseResearcher: researcher?.profile?.avatarBase ?? null,
@@ -1224,7 +907,7 @@ export async function finalizeParticipantWithThankYou(args: {
       select: { id: true },
     });
 
-    // 設為 Completed
+    // Set as Completed
     await tx.participation.update({
       where: { id: p.id },
       data: { status: ParticipationStatus.Completed },
@@ -1239,7 +922,7 @@ export async function finalizeParticipantWithThankYou(args: {
 
 
 export async function patchForm(slug: string, payload: NormalizedFormPayload) {
-  const data = normalizedFormSchema.parse(payload); // 你前端已經在用的 transform
+  const data = normalizedFormSchema.parse(payload); 
 
   return await prisma.$transaction(async (tx) => {
     const study = await tx.study.findUnique({
@@ -1256,7 +939,7 @@ export async function patchForm(slug: string, payload: NormalizedFormPayload) {
       select: { id: true, _count: { select: { responses: true } } },
     });
 
-    // 題目為零 → 視為沒有表單，直接刪除並忽略 description
+    // No question
     if (data.form.length === 0) {
       if (existing) {
         if (existing._count.responses > 0) {
@@ -1267,7 +950,6 @@ export async function patchForm(slug: string, payload: NormalizedFormPayload) {
       return { ok: true, removed: true };
     }
 
-    // 有題目 → 建或重建
     if (existing) {
       if (existing._count.responses > 0) {
         throw new Error("Form already has responses and cannot be modified.");
@@ -1307,9 +989,6 @@ export async function patchForm(slug: string, payload: NormalizedFormPayload) {
   });
 }
 
-
-
-
 export type ApplyFormDTO = {
   studyId: string;
   slug: string;
@@ -1343,7 +1022,7 @@ export async function getApplyForm(slug: string): Promise<ApplyFormDTO | null> {
           id: true,
           description: true,
           questions: {
-            orderBy: { order: "asc" }, // 若你有 question.order，改成 { order: 'asc' }
+            orderBy: { order: "asc" },
             select: {
               id: true,
               order: true,
@@ -1351,7 +1030,7 @@ export async function getApplyForm(slug: string): Promise<ApplyFormDTO | null> {
               type: true,
               required: true,
               options: {
-                orderBy: { id: "asc" }, // 若你有 option.order，可改成 { order: 'asc' }
+                orderBy: { id: "asc" },
                 select: { id: true, text: true },
               },
             },
@@ -1391,12 +1070,10 @@ export async function applyToStudy(input: {
 }) {
   const { slug, formId, answers } = input;
 
-  // 1) 取使用者
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) redirect("/login");
 
-  // 2) 撈表單 + 研究狀態（需 ongoing/open）
   const form = await prisma.form.findUnique({
     where: { id: formId },
     include: {
@@ -1414,7 +1091,6 @@ export async function applyToStudy(input: {
     redirect(`/recruitment/${slug}?error=Recruitment%20is%20not%20open`);
   }
 
-  // 3) 若已申請：順便把 pending 邀請標記為 applied，然後導回
   const dup = await prisma.participation.findFirst({
     where: { userId, studyId: form.study.id },
     select: { id: true },
@@ -1434,7 +1110,7 @@ export async function applyToStudy(input: {
     redirect(`/recruitment/${slug}?applied=1&dup=1`);
   }
 
-  // 4) 建立 Participation / Response / Answers（交易）
+  // Set Participation / Response / Answers
   try {
     await prisma.$transaction(async (tx) => {
       const participation = await tx.participation.create({
@@ -1507,13 +1183,13 @@ export async function applyToStudy(input: {
         }
       }
 
-      // 寫回 totalScore（你已新增此欄位）
+      // totalScore
       await tx.formResponse.update({
         where: { id: response.id },
         data: { totalScore },
       });
 
-      // 在同一交易中處理 pending 邀請 → 標記為 applied
+      // Set pending to applied
       const inv = await tx.invitation.findFirst({
         where: { studyId: form.study.id, userId, status: "pending" },
         select: { id: true },
@@ -1530,32 +1206,11 @@ export async function applyToStudy(input: {
     redirect(`/recruitment/${slug}?error=${encodeURIComponent(msg)}`);
   }
 
-  // 5) 成功：revalidate + 導回
   revalidatePath(`/recruitment/${slug}`);
   redirect(`/recruitment/${slug}?applied=1`);
 }
 
-
-
-// !!TODO 預查人數
 export async function countEligibleProfiles(criteria: Criterion[]) {
   const where = buildRequiredWhere(criteria);
-  // 若要排除已在某 study 的人，可以加 notIn 條件
   return prisma.userProfile.count({ where: where.profile.is });
 }
-
-const Payload = z.object({ criteria: z.array(insertCriteria) });
-
-// export async function estimateEligibleAction(
-//   _prev: { count?: number; error?: string } | null,
-//   formData: FormData
-// ) {
-//   try {
-//     const raw = formData.get('payload');
-//     const parsed = Payload.parse(JSON.parse(String(raw)));
-//     const count = await countEligibleProfiles(parsed.criteria);
-//     return { count };
-//   } catch (e: any) {
-//     return { error: e?.message ?? 'Failed to estimate' };
-//   }
-// }

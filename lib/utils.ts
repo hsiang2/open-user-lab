@@ -21,16 +21,16 @@ function capitalize(s: string) {
 }
 
 export function formatError(error: unknown): string {
-  // Zod 驗證錯誤
+  // Zod 
   if (error instanceof ZodError) {
     const msgs = error.issues.map(i => i.message).filter(Boolean);
     return msgs.length ? msgs.join(". ") : "Validation failed.";
   }
 
-  // Prisma 已知錯誤（例如唯一鍵衝突 P2002）
+  // Prisma 
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === "P2002") {
-      // error.meta?.target 可能是欄位陣列
+      // error.meta?.target 
       let field = "Field";
       const meta = error.meta; // Record<string, unknown> | undefined
       if (meta && typeof meta === "object" && "target" in meta) {
@@ -44,54 +44,21 @@ export function formatError(error: unknown): string {
       }
       return `${capitalize(field)} already exists`;
     }
-    // 其他 Prisma 錯誤代碼
+    // Other Prisma error
     return `Database error (${error.code}).`;
   }
 
-  // 一般 Error
+  // General Error
   if (error instanceof Error) {
     return error.message;
   }
 
-  // 兜底：可序列化物件或原始型別
   try {
     return JSON.stringify(error);
   } catch {
     return String(error);
   }
 }
-
-// Format errors
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-// export function formatError(error: any) {
-//   if (error.name === 'ZodError' && Array.isArray(error.issues)) {
-//     // Handle Zod error (Zod v3+)
-//     const messages = error.issues.map((issue: any) => issue.message);
-//     return messages.join('. ');
-//   // if (error.name === 'ZodError') {
-//   //   // Handle Zod error
-//   //   const fieldErrors = Object.keys(error.errors).map(
-//   //     (field) => error.errors[field].message
-//   //   );
-
-//   //   return fieldErrors.join('. ');
-//   } else if (
-//     error.name === 'PrismaClientKnownRequestError' &&
-//     error.code === 'P2002'
-//   ) {
-//     // Handle Prisma error
-//     const field = error.meta?.target ? error.meta.target[0] : 'Field';
-//     return `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`;
-//   } else {
-//     // Handle other errors
-//     return typeof error.message === 'string'
-//       ? error.message
-//       : JSON.stringify(error.message);
-//   }
-// }
-
-
-// 這些泛型只適用於 "as const" 的字串常量陣列
 
 export function inConst<T extends readonly string[]>(
   arr: T,

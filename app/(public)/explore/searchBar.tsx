@@ -1,11 +1,10 @@
-// components/explore/ExploreToolbar.tsx
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch"; // 若沒有就用 checkbox 也行
+import { Switch } from "@/components/ui/switch"; 
 
 export default function ExploreToolbar({
   defaultQ = "",
@@ -23,7 +22,6 @@ export default function ExploreToolbar({
   const search = useSearchParams();
   const [, start] = useTransition();
 
-  // 當使用者用「上一頁 / 下一頁」改了網址時，和本地 state 同步
   useEffect(() => setOnlyMatched(matched), [matched]);
   useEffect(() => setText(defaultQ), [defaultQ]);
 
@@ -31,7 +29,7 @@ export default function ExploreToolbar({
     const qs = new URLSearchParams(search.toString());
     if (q.trim()) qs.set("q", q.trim()); else qs.delete("q");
     if (m) qs.set("matched", "1"); else qs.delete("matched");
-    qs.delete("cursor"); // 切換模式或重新搜尋要回第一頁
+    qs.delete("cursor"); 
     start(() => router.push(`/explore?${qs.toString()}`));
   };
 

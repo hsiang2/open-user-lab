@@ -2,16 +2,12 @@ import { z } from "zod";
 import { AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE, BACKGROUND_CATEGORIES, GENDERS, LANGUAGES, RECRUITMENT_FORMATS, REGIONS, STUDY_IMAGE } from "./constants";
 import { CriteriaMatchLevel, EvaluationType, ProfileField, QuestionType } from "@prisma/client";
 
-// Schema for inserting studies
 export const insertStudySchema = z.object({
     name: z.string().min(1, 'Name is required').max(100, 'Name must be 100 characters or fewer'),
     description: z.string().min(1, 'Description is required').max(1000, 'Description must be 1000 characters or fewer'),
-    // status: StudyStatusEnum,
-    // recruitmentStatus: RecruitmentStatusEnum
 })
 
 export const insertRecruitmentSchema = z.object({
-    // description: z.string().max(1000, 'Description must be 1000 characters or fewer').optional(),
     reward: z.string().max(1000, 'Reward must be 1000 characters or fewer').nullable().optional(),
     format: z.array(z.enum(RECRUITMENT_FORMATS)).min(1).max(4),
     formatOther: z.string().max(100).nullable().optional(),
@@ -81,7 +77,6 @@ export const criteriaUiSchema = z.object({
 
 export const insertParticipantWorkflowStep = z.object({
   name:  z.string().min(1, 'Name is required').max(1000, 'Name must be 1000 characters or fewer'),
-  // order: z.number().int().positive(),  
   noteResearcher: z.string().max(1000, 'Note must be 1000 characters or fewer').optional(),
   noteParticipant:   z.string().max(1000, 'Note must be 1000 characters or fewer').optional(),
   deadline: z.coerce.date().optional(),
@@ -89,7 +84,6 @@ export const insertParticipantWorkflowStep = z.object({
 
 export const insertStudyWorkflowStep = z.object({
   name:  z.string().min(1, 'Name is required').max(1000, 'Name must be 1000 characters or fewer'),
-  // order: z.number().int().positive(),  
   note: z.string().max(1000, 'Note must be 1000 characters or fewer').optional(),
   deadline: z.coerce.date().optional(),
 })
@@ -101,12 +95,6 @@ export const createStudyFullSchema = insertStudySchema
       criteria: criteriaUiSchema,
       participantSteps: z.array(insertParticipantWorkflowStep).min(1, "Please add at least one participant step"),
       studySteps: z.array(insertStudyWorkflowStep).default([]),
-
-
-      // thankYouMessage: z.string().max(1000).optional(),
-      // avatarBaseResearcher: z.string().optional(),
-      // avatarAccessoryResearcher: z.string().optional(),
-      // image: z.string().optional(),
     })
   )
 
@@ -117,13 +105,11 @@ export const recruitmentGoalSchema = z.object({
 });
 
 
-// Schema for signing users in
 export const signInFormSchema = z.object({
     email: z.string().email('Invalid email address'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
   });
 
-// Schema for signing up a user
 export const signUpFormSchema = z
   .object({
     name: z.string().min(3, 'Name must be at least 3 characters').max(50, 'Name must be at most 50 characters'),
@@ -181,8 +167,6 @@ export const signUpFormSchema = z
     message: "Please specify your background",
     path: ["backgroundOther"],
   });
-
-
 
 //Form
 export const optionInputSchema = z.object({
@@ -243,10 +227,10 @@ export const formSchema = z.object({
   form: z.array(questionSchema).default([]),
 });
 
-/** 正規化
- * text 題清空 options
- * automatic 題：空值視為 0 分
- * 非 automatic 題：移除分數
+/** 
+ * text: empty options
+ * automatic： set to 0 
+ * non automatic：empty score
  */
 export const normalizedFormSchema = formSchema.transform((data) => {
   const desc = data.description ?? "";

@@ -17,7 +17,6 @@ const AppliedParticipants = async ({slug, sort} : {slug: string, sort?: string})
     return (
        <div className="my-8">
             <Table >
-                {/* <TableCaption>A list of your recent invoices.</TableCaption> */}
                 <TableHeader>
                     <TableRow>
                         <TableHead>Name</TableHead>
@@ -25,7 +24,6 @@ const AppliedParticipants = async ({slug, sort} : {slug: string, sort?: string})
                         <TableHead>Manual Questions</TableHead>
                         <TableHead>Scored Questions</TableHead>
                         <TableHead>Unscored Questions</TableHead>
-                        {/* <TableHead>Submitted At</TableHead> */}
                         <TableHead>Action</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -72,12 +70,6 @@ const AppliedParticipants = async ({slug, sort} : {slug: string, sort?: string})
                                             <CriteriaList label="Required" matched={p.criteria.requiredMatched}  mismatched={p.criteria.requiredMismatches} missing={p.criteria.missingRequired}  />
                                             <CriteriaList label="Optional" matched={p.criteria.optionalMatched}  mismatched={p.criteria.optionalMismatches} missing={p.criteria.missingOptional}  />
                                         </div>
-                                        {/* <DialogFooter>
-                                            <DialogClose asChild>
-                                                <Button variant="outline">Cancel</Button>
-                                            </DialogClose>
-                                            <Button type="submit">Save changes</Button>
-                                        </DialogFooter> */}
                                     </DialogContent>
                                 </Dialog>
                             </div>
@@ -104,7 +96,6 @@ const AppliedParticipants = async ({slug, sort} : {slug: string, sort?: string})
                                 slug={slug}
                                 participationId={p.id}
                                 answers={p.form.manual.answers}
-                                // triggerLabel="Review" // 可選
                                 />
                             </div>
                             
@@ -150,12 +141,6 @@ const AppliedParticipants = async ({slug, sort} : {slug: string, sort?: string})
                                                 ))
                                             }
                                         </div>
-                                        {/* <DialogFooter>
-                                            <DialogClose asChild>
-                                                <Button variant="outline">Cancel</Button>
-                                            </DialogClose>
-                                            <Button type="submit">Save changes</Button>
-                                        </DialogFooter> */}
                                     </DialogContent>
                                 </Dialog>
                              </div>

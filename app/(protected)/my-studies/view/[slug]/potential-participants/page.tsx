@@ -6,17 +6,10 @@ import { PotentialParticipantCard } from "./PotentialParticipantsCard";
 import { prisma } from "@/db/prisma";
 import { PageProps } from "@/types/next-helper";
 
-// type PageProps = {
-//   params: { slug: string };
-//   searchParams: { cursor?: string; };
-// };
-
 const PotentialParticipantsPage = async ( { params, searchParams }: PageProps<{ slug: string }, { cursor?: string }>) => {
 
     const { cursor } = await searchParams; 
     const  { slug } = await params;
-    // const onlyEligible = searchParams.onlyEligible !== "false"; // 預設 true
-    // const cursor = searchParams.cursor;
 
     const study = await prisma.study.findUnique({
         where: { slug },
@@ -36,7 +29,7 @@ const PotentialParticipantsPage = async ( { params, searchParams }: PageProps<{ 
         "use server";
         const uid = String(formData.get("userId"));
         await inviteUserToStudy(slug, uid);
-        // 回到當前頁
+
         redirect(`/my-studies/view/${slug}/potential-participants${cursor ? `?cursor=${cursor}` : ""}`);
     }
 
@@ -68,15 +61,6 @@ const PotentialParticipantsPage = async ( { params, searchParams }: PageProps<{ 
                 </div>
                 </div>
             )}
-
-            {/* <div className="flex justify-end">
-                <Link
-                    href={`?onlyEligible=${!onlyEligible}`}
-                    className="text-sm underline"
-                >
-                    {onlyEligible ? "Show near‑match" : "Show only eligible"}
-                </Link>
-            </div> */}
             { items.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {items.map((it) => (
@@ -84,9 +68,6 @@ const PotentialParticipantsPage = async ( { params, searchParams }: PageProps<{ 
                             <input type="hidden" name="userId" value={it.userId} />
                             <PotentialParticipantCard
                                 item={it}
-                                // onInvite={() => {}}
-                                // onSave={() => {}}
-                                // onView={() => {}}
                             />
                         </form>
                     ))}

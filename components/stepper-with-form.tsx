@@ -130,14 +130,9 @@ const SessionForm = ({ showErrors }: Props) => {
                     <MultipleSelector
                     value={formatOptions.filter(opt =>selectedValues.includes(opt.value))}
                     onChange={(selected: Option[]) => {
-                        const values = selected.map(o => o.value); // string[]
-                      // 告訴 TS 這其實是 enum union 的陣列（避免 any）
+                        const values = selected.map(o => o.value); 
                       field.onChange(values as (typeof RECRUITMENT_FORMATS)[number][]);
-                      // 判斷 Other 也用 selected 來看，避免 union 比對
                       setShowOtherFormat(selected.some(s => s.value === "Other"));
-                        // const values = selected.map(opt => opt.value);                                     
-                        // field.onChange(values);
-                        // setShowOtherFormat(values.includes("Other"));
                     }}
                     defaultOptions={formatOptions}
                     placeholder="Select session formats"
@@ -260,14 +255,10 @@ const SessionForm = ({ showErrors }: Props) => {
   );
 };
 
-// 小工具：從巢狀物件用 "a.b.c" 取值
-// const getAt = (obj: any, path: string) =>
-//   path.split(".").reduce((o, k) => (o ? (o as any)[k] : undefined), obj);
-// 不用 any、也不會觸發 no-explicit-any
+// Util "a.b.c" get value
 const getAt = (obj: unknown, path: string): unknown =>
   path.split(".").reduce<unknown>((acc, key) => {
     if (acc != null && typeof acc === "object") {
-      // 以 indexable 物件存取；陣列的 "0"、"1" 也會被當作 key
       return (acc as Record<string, unknown>)[key];
     }
     return undefined;
@@ -295,7 +286,6 @@ export function CriterionRow({
   const level = watch(levelName) as MatchLevel | undefined;
   const disabled = !level || level === "No Preference";
 
-  // 這一步的 values 欄位錯誤（我們在 superRefine 有把 path 指到 ["values"]）
   const valuesError = getAt(errors, valuesName) as { message?: string }
 
   return (
@@ -438,7 +428,6 @@ export function CriterionAgeRow({
                   inputMode="numeric"
                 placeholder="Max" 
                 min={0} 
-                // {...field} 
                 className="w-[120px]" 
                  aria-invalid={!!maxError}
                 aria-describedby={maxError ? `${maxName}-error` : undefined}
@@ -468,7 +457,6 @@ export function CriteriaForm({showErrors}: Props) {
   return (
     <div className="space-y-6 w-full max-w-[800px]">
       <EligibleCountButton />
-      {/* <EligibleCountChip /> */}
       <CriterionAgeRow
         levelName="criteria.age.matchLevel"
         minName="criteria.age.min"
@@ -524,7 +512,7 @@ export default function WorkflowFormBase<T extends "participantSteps" | "studySt
     control,
     register,
     formState: { errors },
-  } = useFormContext<StudyFullInput>(); // 泛型沿用你外層 <FormProvider> 的 StudyFullInput
+  } = useFormContext<StudyFullInput>();
 
   const { fields, append, remove, move, insert } = useFieldArray<StudyFullInput>({
     control,
@@ -552,7 +540,7 @@ export default function WorkflowFormBase<T extends "participantSteps" | "studySt
         note: "",
         deadline: undefined,
       };
-      append(empty); // 同上
+      append(empty); 
     }
   };
 
@@ -747,7 +735,7 @@ export function toCriteriaArray(ui: CriteriaUiValues): Criteria[] {
     out.push({ type, value: values, matchLevel: mapLevel(level) });
   };
 
-  // 多選類
+  // Multiple select
   if (ui.gender.matchLevel !== "No Preference")
     push(true, ProfileField.gender, ui.gender.values, ui.gender.matchLevel);
 
@@ -760,7 +748,7 @@ export function toCriteriaArray(ui: CriteriaUiValues): Criteria[] {
   if (ui.language.matchLevel !== "No Preference")
     push(true, ProfileField.language, ui.language.values, ui.language.matchLevel);
 
-  // 年齡：以 ["min","max"] 兩格字串存，查詢時再轉 DOB 範圍
+  // Age: ["min","max"] 
   if (ui.age.matchLevel !== "No Preference" && ui.age.min != null && ui.age.max != null) {
     push(true, ProfileField.birth, [String(ui.age.min), String(ui.age.max)], ui.age.matchLevel);
   }
@@ -784,8 +772,7 @@ const { Stepper, useStepper } = defineStepper(
   {
     id: "criteria",
     title: "Recruitment Criteria",
-    // schema: criteriaUiSchema,
-     schema: z.object({ criteria: criteriaUiSchema }),
+    schema: z.object({ criteria: criteriaUiSchema }),
     Component: CriteriaForm,
   },
   {
@@ -826,9 +813,7 @@ const FormStepperComponent = () => {
   const form = useForm<StudyFullInput>({
     mode: "onTouched",
     resolver: zodResolver(createStudyFullSchema) as Resolver<StudyFullInput>,
-    // resolver: zodResolver(methods.current.schema),
     defaultValues: {
-    // 其他步的初值...
     criteria: {
       gender:     { matchLevel: "No Preference", values: [] },
       background: { matchLevel: "No Preference", values: [] },
@@ -845,13 +830,12 @@ const FormStepperComponent = () => {
   const showErrors = !!showErrorsByStep[methods.current.id];
 
   const onSubmit = async (all: StudyFullInput) => {
-    // 不是最後一步就不送（避免有人按 Enter 觸發 submit）
     if (!methods.isLast) return;
 
-    // 1) 轉換 criteria（過濾掉 No Preference）
+    // Convert criteria（filter No Preference）
     const criteria = toCriteriaArray(all.criteria);
 
-    // 2) 組 payload（order 用索引補）
+    // payload（use index as order）
     const payload = {
       name: all.name,
       description: all.description,
@@ -867,15 +851,13 @@ const FormStepperComponent = () => {
       participantSteps: (all.participantSteps ?? []).map((s, i) => ({ ...s, order: i + 1 })),
       studySteps: (all.studySteps ?? []).map((s, i) => ({ ...s, order: i + 1 })),
 
-      // 可選：不傳 image / avatarResearcher / thankYouMessage，讓後端套預設
     } satisfies StudyCreatePayload;
 
     console.log(payload)
 
     try {
       const { slug } = await createStudyFull(payload);
-      // 成功：導頁或重置
-      // methods.reset(); // 如果你想回到第一步
+
       router.push(`/my-studies/view/${slug}/overview`);
     } catch (e) {
       console.error(e);
@@ -902,7 +884,7 @@ const FormStepperComponent = () => {
 
   const validateStep = async (stepId: string) => {
     const keys = fieldsByStep[stepId] ?? [];
-    if (!keys.length) return true; // 這步沒有要驗證的欄位
+    if (!keys.length) return true; 
     return await form.trigger(keys, { shouldFocus: true });
   };
 
@@ -920,12 +902,11 @@ const FormStepperComponent = () => {
   return (
     <Form {...form}>
       <form 
-        // onSubmit={form.handleSubmit(onSubmit)} 
-         onSubmit={(e) => e.preventDefault()} // 不用原生 submit
+         onSubmit={(e) => e.preventDefault()} 
           onKeyDown={(e) => {
             if (
             e.key === "Enter" &&
-            !(e.target instanceof HTMLTextAreaElement) && // 排除 textarea
+            !(e.target instanceof HTMLTextAreaElement) && // Exclude textarea
             !methods.isLast
           ) {
             e.preventDefault();
@@ -938,15 +919,12 @@ const FormStepperComponent = () => {
             <Stepper.Step
               key={step.id}
               of={step.id}
-              // type={step.id === methods.current.id ? "submit" : "button"}
               type="button"
                onClick={async () => {
-                // 如果是往前跳，直接跳
                 if (methods.all.indexOf(step) < methods.all.indexOf(methods.current)) {
                   methods.goTo(step.id);
                   return;
                 }
-                // 往後跳需要驗證
                 const ok = await validateStep(methods.current.id);
                 if (!ok) {
                   setShowErrorsByStep(p => ({ ...p, [methods.current.id]: true }));
@@ -967,7 +945,6 @@ const FormStepperComponent = () => {
           studyWorkflow: ({ Component }) => <Component showErrors={showErrors} />,
         })}
         <Stepper.Controls className="mt-10">
-          {/* {!methods.isLast && ( */}
             <Button
               type="button" 
               variant="secondary"
@@ -976,15 +953,13 @@ const FormStepperComponent = () => {
             >
               Previous
             </Button>
-          {/* )} */}
           <Button
            type="button"
            onClick={() => {
               if (!methods.isLast) {
-                // 非最後一步：驗證當步
+                // validate
                 handleNext();
               } else {
-                // 最後一步：手動送出（不走原生 submit）
                 form.handleSubmit(onSubmit)();
               }
             }}

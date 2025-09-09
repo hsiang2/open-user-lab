@@ -33,7 +33,7 @@ export function ApplyButton({ slug, disabled }: { slug: string; disabled: boolea
       const res = await checkStudyEligibility(slug);
       setLastHasForm(res.hasForm);
 
-      // 1) 阻擋（required）
+      // Block（required）
       if (res.missingRequired.length > 0) {
         setWarn({ kind: "BLOCK_MISSING_REQUIRED", fields: res.missingRequired });
         setOpenWarn(true);
@@ -45,7 +45,7 @@ export function ApplyButton({ slug, disabled }: { slug: string; disabled: boolea
         return;
       }
 
-      // 2) 提醒（optional）
+      // Warning（optional）
       const missOpt = res.missingOptional;
       const misOpt = res.optionalMismatches;
       if (missOpt.length > 0 && misOpt.length > 0) {
@@ -64,7 +64,7 @@ export function ApplyButton({ slug, disabled }: { slug: string; disabled: boolea
         return;
       }
 
-      // 3) 完全通過
+      // Pass
       if (res.hasForm) {
         router.push(`/apply/${slug}`);
       } else {
@@ -80,7 +80,7 @@ export function ApplyButton({ slug, disabled }: { slug: string; disabled: boolea
     } else if (lastHasForm === false) {
       setOpenConfirm(true);
     } else {
-      // 保險：不太會進來
+      // Safety
       start(async () => {
         const res = await checkStudyEligibility(slug);
         setLastHasForm(res.hasForm);
@@ -98,20 +98,19 @@ export function ApplyButton({ slug, disabled }: { slug: string; disabled: boolea
     });
   }
 
-  // ===== Render helpers =====
   function titleAndBodyFromWarn(w: NonNullable<WarnState>) {
     switch (w.kind) {
       case "BLOCK_MISSING_REQUIRED":
         return {
           title: "You’re missing required information",
           body: `Please complete: ${w.fields.join(", ")}`,
-          cta: "update", // show update profile
+          cta: "update",
         };
       case "BLOCK_REQUIRED_MISMATCH":
         return {
           title: "You’re not eligible",
           body: `Not eligible based on: ${w.fields.join(", ")}`,
-          cta: "close", // only close; updating無效
+          cta: "close", 
         };
       case "WARN_MISSING_OPTIONAL":
         return {
@@ -149,7 +148,7 @@ export function ApplyButton({ slug, disabled }: { slug: string; disabled: boolea
         {isPending ? "Checking..." : "Apply"}
       </Button>
 
-      {/* 提醒/阻擋彈窗 */}
+      {/* warning */}
       <AlertDialog open={openWarn} onOpenChange={setOpenWarn}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -209,7 +208,7 @@ export function ApplyButton({ slug, disabled }: { slug: string; disabled: boolea
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 沒表單的二次確認 */}
+      {/* No form confirm warning */}
       <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>

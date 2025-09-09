@@ -164,7 +164,6 @@ const ProfilePage = async ({ params }: PageParams<{ id: string }>) => {
             </div>
             <div className="flex flex-col items-center mt-18 ">
                 <Tabs defaultValue="participation" className="flex flex-col items-center w-full">
-                    {/* w-[400px] */}
                 <TabsList>
                     <TabsTrigger value="participation">Participation</TabsTrigger>
                     {

@@ -26,8 +26,6 @@ export function RecruitmentForm({ recruitment, slug }: { recruitment: Recruitmen
     resolver: zodResolver(fullRecruitmentSchema) as Resolver<RecruitmentFormValues>,
     defaultValues: {
       ...recruitment,
-    //   image: recruitment.image || STUDY_IMAGE[0],
-    //   thankYouMessage: recruitment.thankYouMessage || "Thank you for participating in our study. Your contribution is greatly appreciated!",
     },
      mode: "onChange",
   });
@@ -37,7 +35,7 @@ export function RecruitmentForm({ recruitment, slug }: { recruitment: Recruitmen
   }
 
   function onCancel() {
-    form.reset(); // 回到 defaultValues
+    form.reset(); 
     setIsEditing(false);
   }
 
@@ -57,7 +55,6 @@ export function RecruitmentForm({ recruitment, slug }: { recruitment: Recruitmen
       await patchRecruitment(slug, payload);
       setIsEditing(false);
           form.reset(payload); 
-    //   router.refresh(); // 讓頁面顯示最新
     });
   }
 
@@ -119,8 +116,6 @@ export function RecruitmentForm({ recruitment, slug }: { recruitment: Recruitmen
                         value={formatOptions.filter(opt => (field.value as string[])?.includes(opt.value))}
                         onChange={(selected: Option[]) => {
                             field.onChange(selected.map(opt => opt.value));
-                            
-                            // form.setValue("formatOther", null);
                         }}
                         defaultOptions={formatOptions}
                         placeholder="Select session formats"

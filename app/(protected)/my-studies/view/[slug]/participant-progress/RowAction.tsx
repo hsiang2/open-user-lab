@@ -1,4 +1,3 @@
-// RowActions.client.tsx
 "use client";
 import { useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -16,8 +15,7 @@ export default function RowActions({ id }: { id: string }) {
     setWhich(tag);
     start(async () => {
       await updateParticipationStatus(id, next);
-      router.refresh(); // 該列會消失（因為不再是 Applied）
-      // 不用 setWhich(null)，refresh 會重渲染
+      router.refresh(); 
     });
   }
 

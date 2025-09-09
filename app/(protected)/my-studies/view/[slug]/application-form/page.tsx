@@ -23,7 +23,6 @@ const StudyRecruitmentSettingPage = () => {
     const {study} = useStudy();
     const initial = toFormValues(study);
    
-    // const getUserAvatar
     return (
         <div className="my-8">
             <div className="flex flex-col flex-center space-y-10">

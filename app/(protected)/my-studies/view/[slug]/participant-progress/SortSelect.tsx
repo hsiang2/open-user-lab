@@ -1,4 +1,3 @@
-// app/(root)/recruitment/[slug]/SortSelect.tsx
 "use client";
 
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";

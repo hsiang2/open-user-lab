@@ -8,12 +8,9 @@ import Link from "next/link";
 const InvitedParticipants = async ({slug} : {slug:string}) => {
     const invitations = await listInvitationsForStudy(slug)
    
-    // const getUserAvatar
     return (
             <div className="my-8">
-                {/* <h2 className="text-subtitle">Recruitment Page</h2> */}
             <Table>
-                {/* <TableCaption>A list of your recent invoices.</TableCaption> */}
                 <TableHeader>
                     <TableRow>
                     <TableHead className="min-w-[200px]">Name</TableHead>
@@ -36,12 +33,6 @@ const InvitedParticipants = async ({slug} : {slug:string}) => {
                     </TableRow>
                     ))}
                 </TableBody>
-                {/* <TableFooter>
-                    <TableRow>
-                    <TableCell colSpan={3}>Total</TableCell>
-                    <TableCell className="text-right">$2,500.00</TableCell>
-                    </TableRow>
-                </TableFooter> */}
                 </Table>
             </div>
     );

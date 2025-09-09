@@ -11,8 +11,6 @@ async function requireUserId() {
   return s.user.id;
 }
 
-
-/** 1) Participating = 我被選上（Selected），研究未結束 */
 export async function listMyParticipatingStudies() {
   const userId = await requireUserId();
 
@@ -29,7 +27,6 @@ export async function listMyParticipatingStudies() {
   return rows.map(r => r.study);
 }
 
-/** 2) Pending = 我已申請（Applied） */
 export async function listMyPendingStudies() {
   const userId = await requireUserId();
 
@@ -46,7 +43,6 @@ export async function listMyPendingStudies() {
   return rows.map(r => r.study);
 }
 
-/** 3) Invitations = 我收到的邀請（pending）→ 只回傳 study 陣列 */
 export async function listMyInvitationStudies() {
   const userId = await requireUserId();
 
@@ -63,7 +59,6 @@ export async function listMyInvitationStudies() {
   return rows.map(r => r.study);
 }
 
-/** 4) Ended = 我已完成 或 研究已結束 */
 export async function listMyEndedStudies() {
   const userId = await requireUserId();
 
@@ -83,7 +78,6 @@ export async function listMyEndedStudies() {
   return rows.map(r => r.study);
 }
 
-
 // detail
 export async function getMyParticipationDetailBySlug(slug: string) {
   const userId = await requireUserId();
@@ -92,7 +86,7 @@ export async function getMyParticipationDetailBySlug(slug: string) {
     where: { userId, study: { slug } },
     select: {
       id: true,
-      status: true,            // "Selected" / "Applied" / ...
+      status: true,        
       study: {
         select: {
           id: true, slug: true, name: true, description: true,
@@ -153,7 +147,7 @@ export async function getMyParticipationDetailBySlug(slug: string) {
 
   if (!p) throw new Error("Not found");
 
-  // Progress 分頁：只有 Selected 時才真的有流程；其他狀態回傳空 steps 也行
+  // Progress tab：Only exist when Selected, so steps are nullable
   const steps = (p.study.participantWorkflow?.steps ?? []).map(st => ({
     id: st.id,
     name: st.name,

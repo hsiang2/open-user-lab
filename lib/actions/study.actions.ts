@@ -1,6 +1,6 @@
 'use server';
 import { prisma } from '@/db/prisma'
-import { LATEST_STUDIES_LIMIT, STUDY_IMAGE } from "../constants";
+import { STUDY_IMAGE } from "../constants";
 import { slugify } from '../utils';
 import { auth } from '@/auth';
 import { StudyCreatePayload } from '@/types';
@@ -12,24 +12,10 @@ import { Prisma } from '@prisma/client';
 import { PROFILE_FOR_EVAL_SELECT, ProfileForEval } from '@/contracts/user';
 import { Criterion } from './eligibility';
 
-// Get latest study
-// export async function getLatestStudies():Promise<StudyCard[]>  {
-//     const data = await prisma.study.findMany({
-//       where: {
-//       status: 'ongoing', 
-//       recruitmentStatus: 'open'
-//     },
-//         take: LATEST_STUDIES_LIMIT,
-//         orderBy: { createdAt: 'desc' },
-//         select: STUDY_CARD_SELECT,
-//     })
-//     return data
-// }
-
 type ListExploreParams = {
   q?: string;
   take?: number;
-  cursor?: string; // 用 study.id 當 cursor
+  cursor?: string; 
 };
 
 export async function listExplore({ q, take = 12, cursor }: ListExploreParams)
@@ -57,17 +43,17 @@ export async function listExplore({ q, take = 12, cursor }: ListExploreParams)
 
   const hasMore = rows.length > take;
   const items = rows.slice(0, take);
-  const nextCursor = hasMore ? items[items.length - 1]!.id : undefined; // 確保 STUDY_CARD_SELECT 有 id
+  const nextCursor = hasMore ? items[items.length - 1]!.id : undefined; 
 
   return { items: items, nextCursor };
 }
 
 
 function meetsRequired(profile: ProfileForEval | null, criteria: Criterion[]) {
-  if (!criteria?.length) return true; // 沒設定就全部通過
+  if (!criteria?.length) return true; 
   const p = profile ?? { gender: null, language: [], region: null, background: [], birth: null };
 
-  // 只看 Required
+  // check Required only
   for (const c of criteria) {
     if (c.matchLevel !== "Required") continue;
     switch (c.type) {
@@ -79,7 +65,7 @@ function meetsRequired(profile: ProfileForEval | null, criteria: Criterion[]) {
         break;
       case "background": {
         if (!p.background?.length) return false;
-        // 至少有一個重疊
+        // At least one overlap
         if (!p.background.some(b => c.value.includes(b))) return false;
         break;
       }
@@ -89,7 +75,7 @@ function meetsRequired(profile: ProfileForEval | null, criteria: Criterion[]) {
         break;
       }
       case "birth": {
-        // 你存的是 ["min","max"] 的年齡字串
+        // ["min","max"]
         const [minS, maxS] = c.value;
         const min = Number(minS), max = Number(maxS);
         if (!p.birth || Number.isNaN(min) || Number.isNaN(max)) return false;
@@ -107,7 +93,7 @@ export async function listExploreMatched(params: ListExploreParams)
 : Promise<{ items: StudyCard[]; nextCursor?: string }> {
   const session = await auth();
   if (!session?.user?.id) {
-    // 未登入：退回一般探索
+    // Not logged in
     return listExplore(params);
   }
 
@@ -116,7 +102,6 @@ export async function listExploreMatched(params: ListExploreParams)
     select: PROFILE_FOR_EVAL_SELECT,
   });
 
-  // 先抓一批，再用 JS 篩掉不合格（最小可行，之後可優化到 SQL）
   const base = await prisma.study.findMany({
     where: { status: "ongoing", recruitmentStatus: "open" },
     select: { ...STUDY_CARD_SELECT, criteria: { select: { type: true, value: true, matchLevel: true } } },
@@ -129,7 +114,6 @@ export async function listExploreMatched(params: ListExploreParams)
   const items = filtered.slice(0, params.take ?? 12);
   const nextCursor = filtered.length > (params.take ?? 12) ? items[items.length - 1]!.id : undefined;
 
-  // 丟掉 criteria 冗餘欄位（依你 StudyCard type 決定是否需要）
   return { items: items.map(({ criteria, ...r }) => r as StudyCard), nextCursor };
 }
 
@@ -143,11 +127,6 @@ export async function getMyStudies(userId: string):Promise<StudyCard[]>  {
       },
     },
     select: STUDY_CARD_SELECT,
-    // include: {
-    //   // collaborators: true,
-    //   recruitment: true,
-    //   // participations: true,
-    // },
     orderBy: {
       createdAt: 'desc',
     },
@@ -159,40 +138,6 @@ export async function getStudyForResearcher(slug: string): Promise<StudyForResea
     return await prisma.study.findFirst({
         where: { slug: slug },
         include: STUDY_FOR_RESEARCHER_INCLUDE,
-        // include: {
-        //     collaborators: {
-        //       select: {
-        //         id: true,
-        //         role: true,
-        //         user: {
-        //           select: {
-        //             id: true,
-        //             name: true,
-        //             profile: {
-        //               select: {
-        //                 avatarBase: true,
-        //                 avatarAccessory: true,
-        //                 avatarBg: true,
-        //               },
-        //             },
-        //           },
-        //         }
-        //       }
-        //     },
-        //     participations: true,
-        //     participantSaved: true,
-        //     participantWorkflow: { include: { steps: true } },
-        //     studyWorkflow: { include: { steps: true } },
-        //     criteria: true,
-        //     recruitment: true,
-        //     form: {
-        //       include: {
-        //         questions: {
-        //           include: { options: true },
-        //         },
-        //       },
-        //     },
-        //   },
     })
 }
 
@@ -273,7 +218,6 @@ export async function createStudyFull(
   order: i + 1,
   noteResearcher: s.noteResearcher ?? null,
   noteParticipant: s.noteParticipant ?? null,
-  // 統一型別：如果前端傳的是 Date，直接給 Prisma OK；若有可能是字串就轉一下
   deadline: s.deadline ?? null,
 }));
 
@@ -285,7 +229,7 @@ const studyStepsWithOrder = (input.studySteps ?? []).map((s, i) => ({
 }));
 
   return await prisma.$transaction(async (tx) => {
-    // 1) Study
+    // Study
     const slug = await generateUniqueSlug(input.name)
     const study = await tx.study.create({
       data: {
@@ -305,7 +249,7 @@ const studyStepsWithOrder = (input.studySteps ?? []).map((s, i) => ({
       select: { id: true, slug: true },
     })
 
-    // 2) Recruitment
+    // Recruitment
     await tx.recruitment.create({
       data: {
         studyId: study.id,
@@ -328,7 +272,7 @@ const studyStepsWithOrder = (input.studySteps ?? []).map((s, i) => ({
       },
     })
 
-    // 3) Criteria（multiple）
+    // Criteria（multiple）
     if (input.criteria?.length) {
       await tx.criteria.createMany({
         data: input.criteria.map((c) => ({
@@ -340,7 +284,7 @@ const studyStepsWithOrder = (input.studySteps ?? []).map((s, i) => ({
       })
     }
 
-    // 4) Participant Workflow（Parent + children）
+    // Participant Workflow（Parent + children）
 if (participantStepsWithOrder.length > 0) {
   await tx.participantWorkflow.create({
     data: {
@@ -352,7 +296,7 @@ if (participantStepsWithOrder.length > 0) {
   });
 }
 
-// 5) Study Workflow（Parent + children）
+// Study Workflow（Parent + children）
 if (studyStepsWithOrder.length > 0) {
   await tx.studyWorkflow.create({
     data: {
@@ -436,7 +380,6 @@ export async function resumeRecruitment(slug: string) {
   revalidatePath(pathFor(slug));
 }
 
-//檢查
 export async function patchRecruitmentGoal(
   slug: string,
   patchRaw: z.infer<typeof recruitmentGoalSchema>

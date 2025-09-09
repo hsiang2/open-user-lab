@@ -6,56 +6,19 @@ import {
   fullRecruitmentSchema, 
   insertCriteria, 
   insertParticipantWorkflowStep, 
-  insertStudySchema, insertStudyWorkflowStep, 
+  insertStudyWorkflowStep, 
   normalizedFormSchema, 
   optionInputSchema, 
   questionSchema, 
   userProfileSchema } from '@/lib/validators'
 import { z } from 'zod'
 
-// export type Study = z.infer<typeof insertStudySchema> & {
-//     id: string;
-//     createdAt: Date;
-//     slug:  string;
-
-//     // collaborators:          Collaborator[];
-//     // participations: Participation[];
-//     // participantSaved:     ParticipantSaved[];
-//     // participantWorkflow?:  ParticipantWorkflow;
-//     // studyWorkflow?:        StudyWorkflow;
-//     // criteria:              Criteria[];
-//     recruitment?:           RecruitmentFormValues | null;
-//     // form?:                  Form;
-//     // StudySaved: StudySaved[];
-// };
-
 export type RecruitmentFormValues = z.infer<typeof fullRecruitmentSchema>;
 
-// export type Recruitment = z.infer<typeof insertRecruitmentSchema> & {
-//     id: string;
-//     studyId: string;
-
-//     description: string;
-//     image: string;
-//     avatarAccessoryResearcher: string;
-//     avatarBaseResearcher: string;
-//    thankYouMessage: string;
-// };
-
-export type Criteria = z.infer<typeof insertCriteria> & {
-  //   id: string
-  // studyId: string
-};
+export type Criteria = z.infer<typeof insertCriteria> 
 
 export type MatchLevel = "No Preference" | "Optional" | "Required";
 
-// export type CriteriaUiValues = {
-//   gender: { matchLevel: MatchLevel; values: string[] };
-//   background: { matchLevel: MatchLevel; values: string[] };
-//   region: { matchLevel: MatchLevel; values: string[] };
-//   language: { matchLevel: MatchLevel; values: string[] };
-//   age: { matchLevel: MatchLevel; min?: number; max?: number };
-// };
 export type CriteriaUiValues = z.infer<typeof criteriaUiSchema>;
 
 export type ParticipantWorkflowStep = z.infer<typeof insertParticipantWorkflowStep> & {
@@ -102,7 +65,7 @@ export type CheckResult = {
   missingOptional: string[];
   requiredMismatches: string[];
   optionalMismatches: string[];
-  reason?: string; // 顯示用
+  reason?: string; 
 };
 
 // Form

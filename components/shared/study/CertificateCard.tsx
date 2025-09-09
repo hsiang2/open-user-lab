@@ -7,16 +7,11 @@ import { format } from "date-fns";
 
 const CertificateCard = ({ certificate }: { certificate: Certificate }) => {
     return ( 
-        <Card 
-        // className="w-full max-w-sm"
-        >
+        <Card>
             <CardHeader >
-                {/* <Link href={`/recruitment/${study.slug}`}> */}
-                    <h2 className="text-subtitle text-center">{certificate.studyName}</h2>
-                {/* </Link> */}
+                <h2 className="text-subtitle text-center">{certificate.studyName}</h2>
             </CardHeader>
             <CardContent>
-                {/* <div className="flex flex-col"> */}
                 <div className="flex flex-col flex-center">
                     <h1 className="text-sign mb-4 text-2xl">{certificate.participantName}</h1>
                     <StudyImage 

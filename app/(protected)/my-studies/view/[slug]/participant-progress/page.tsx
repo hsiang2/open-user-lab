@@ -6,19 +6,8 @@ import SelectedParticipants from "./SelectedParticipants";
 import SortSelect from "./SortSelect";
 import { PageProps } from "@/types/next-helper";
 
-
-// type PageProps = {
-//   params: { slug: string };
-//   searchParams: Promise<{ sort?: string }>;
-// };
-
 const ParticipantProgressPage = async (
      { params, searchParams }: PageProps<{ slug: string }, { sort?: string }>
-//     { params, searchParams }: {
-
-//   params: { slug: string };
-//   searchParams: Promise<{ sort?: string }>;
-// }
 ) => {
 
     const { slug } = await params;
@@ -27,7 +16,6 @@ const ParticipantProgressPage = async (
   return (
       <div className="flex flex-col items-center my-8">
           <Tabs defaultValue="selected" className="flex flex-col items-center w-full">
-              {/* w-[400px] */}
           <TabsList>
               <TabsTrigger value="selected">Selected</TabsTrigger>
               <TabsTrigger value="applied">Applied</TabsTrigger>

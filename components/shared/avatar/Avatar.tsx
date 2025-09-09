@@ -30,7 +30,6 @@ const Avatar = ({
                 width={width}
                 height={width}
                 className="absolute rounded-full object-cover object-center"
-                // className='min-h-[300px] object-cover object-center'
             />
             <Image
                 src={`/images/avatars/style/${style}.png`}
@@ -38,7 +37,6 @@ const Avatar = ({
                 width={width}
                 height={width}
                 className="absolute rounded-full object-cover object-center"
-                // className='min-h-[300px] object-cover object-center'
             />
             {accessory && 
                 <Image
@@ -47,7 +45,6 @@ const Avatar = ({
                     width={width}
                     height={width}
                     className="absolute rounded-full object-cover object-center"
-                    // className='min-h-[300px] object-cover object-center'
                 />
             }
         </div>

@@ -20,7 +20,6 @@ const MyParticipationPage = async () => {
   return (
       <div className="flex flex-col items-center my-8">
           <Tabs defaultValue="participating" className="flex flex-col items-center w-full">
-              {/* w-[400px] */}
           <TabsList>
               <TabsTrigger value="participating">Participating</TabsTrigger>
                <TabsTrigger value="invitations">Invitations</TabsTrigger>

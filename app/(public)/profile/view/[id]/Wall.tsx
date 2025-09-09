@@ -5,7 +5,6 @@ import { Certificate } from "@/types";
 const Wall = ({certificates}: {certificates: Certificate[]}) => {
     return (  
        <>
-        {/* <div className="bg-[#FCF2E0] rounded-md w-full min-h-[200px] p-8 flex flex-center"> */}
             {certificates.length ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4
                     bg-[#FCF2E0] rounded-md w-full min-h-[200px] p-8

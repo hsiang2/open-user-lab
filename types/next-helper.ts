@@ -1,4 +1,3 @@
-// types/next-helpers.ts
 export type PageParams<P extends Record<string, string> = {}> = {
   params: Promise<P>;
 };

@@ -1,11 +1,10 @@
-// components/criteria/EligibleCountButton.tsx
 "use client";
 
 import { useState, useTransition } from "react";
 import { useFormContext } from "react-hook-form";
 import type { StudyFullInput } from "@/types";
 import { Button } from "@/components/ui/button";
-import { toCriteriaArray } from "@/components/stepper-with-form"; // 依實際路徑調整
+import { toCriteriaArray } from "@/components/stepper-with-form"; 
 
 export function EligibleCountButton() {
   const { getValues } = useFormContext<StudyFullInput>();
@@ -18,7 +17,7 @@ export function EligibleCountButton() {
     start(async () => {
       try {
         const ui = getValues("criteria");
-        const criteria = toCriteriaArray(ui); // 轉成後端的 Criterion[]
+        const criteria = toCriteriaArray(ui); 
 
         const res = await fetch("/api/eligibility/count", {
           method: "POST",

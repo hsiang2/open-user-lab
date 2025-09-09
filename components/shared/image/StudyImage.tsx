@@ -34,7 +34,6 @@ const StudyImage = ({
                     width={400}
                     height={400}
                     className="absolute rounded-md object-cover object-center"
-                    // className='min-h-[300px] object-cover object-center'
                 />
                 <Image
                     src={`/images/avatars/style/${styleResearcher}.png`}
@@ -42,7 +41,6 @@ const StudyImage = ({
                     width={266}
                     height={266}
                     className="absolute object-cover object-center scale-x-[-1] bottom-20 -left-5"
-                    // className='min-h-[300px] object-cover object-center'
                 />
                 {accessoryResearcher && 
                     <Image
@@ -69,7 +67,6 @@ const StudyImage = ({
                         width={266}
                         height={266}
                         className="absolute object-cover object-center left-40 bottom-20"
-                        // className='min-h-[300px] object-cover object-center'
                     />
                 }
             </div>

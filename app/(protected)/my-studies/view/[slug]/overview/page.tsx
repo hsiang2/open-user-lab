@@ -1,6 +1,6 @@
 'use client'
 
-import { Status, Step, useStudy } from "../StudyProviderClient";
+import { useStudy } from "../StudyProviderClient";
 import { StatusActionDialog } from "@/components/shared/study/StatusActionDialog";
 import Avatar from "@/components/shared/avatar/Avatar";
 import { useRouter } from "next/navigation";
@@ -11,8 +11,7 @@ import { RecruitmentGoal } from "./RecruitmentGoal";
 import StudyWorkflow from "./StudyWorkflow";
 
 const StudyOverviewPage = () => {
-    // const study = useStudy();
-          const {study, workflow} = useStudy();
+    const {study, workflow} = useStudy();
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
@@ -22,7 +21,6 @@ const StudyOverviewPage = () => {
         router.refresh();
     });
 
-    // const getUserAvatar
     return (
         <div className="py-4 px-7 flex flex-col items-center space-y-10 justify-center md:flex-row md:space-x-15 md:space-y-0 md:items-start flex-wrap">
             {workflow.steps.length !== 0 && 
@@ -82,9 +80,7 @@ const StudyOverviewPage = () => {
                         <StatusActionDialog
                             type="deleteStudy"
                             onConfirm={() => call(deleteStudy)} 
-                        />
-                    {/* </div> */}
-                   
+                        />          
                 </div>
             </div>
             
@@ -120,13 +116,6 @@ const StudyOverviewPage = () => {
                 </div>
             </div>
         </div>
-        // <div className="flex flex-col items-center my-8">
-        //     <h1 className="text-title text-center max-w-[800px]">{study?.name}</h1>
-        //     <StudyNav slug={slug} />
-        //     <div>  
-
-        //     </div>
-        // </div>
     );
 }
  

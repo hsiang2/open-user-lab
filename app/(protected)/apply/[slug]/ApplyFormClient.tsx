@@ -25,7 +25,6 @@ export default function ApplyFormClient({ data }: { data: ApplyFormDTO }) {
   function onSubmit(values: ApplyValues) {
     startTransition(async () => {
       await applyToStudy({ slug: data.slug, formId: data.formId, answers: values });
-      // 若 action 內有 redirect，這裡不會繼續執行
     });
   }
 
@@ -89,7 +88,6 @@ export default function ApplyFormClient({ data }: { data: ApplyFormDTO }) {
             );
           }
 
-          // multiple_choice with MultipleSelector
           const opts: Option[] = (q.options ?? []).map(o => ({ label: o.text, value: o.id }));
           return (
             <Controller

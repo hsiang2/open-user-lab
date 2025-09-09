@@ -1,24 +1,11 @@
-// components/potential/PotentialParticipantCard.tsx
 "use client";
 import Avatar from "@/components/shared/avatar/Avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { PotentialParticipantItem } from "@/contracts/potential-participant";
-import { AVATAR_ACCESSORY_KEYS, AVATAR_BACKGROUND, AVATAR_STYLE } from "@/lib/constants";
 import { Check, X } from "lucide-react";
 import Link from "next/link";
 import { useFormStatus } from "react-dom";
-
-// type Breakdown = {
-//   ok: boolean;
-//   requiredMatched: string[];
-//   optionalMatched: string[];
-//   missingRequired: string[];
-//   missingOptional: string[];
-//   requiredMismatches: string[];
-//   optionalMismatches: string[];
-//   score: number;
-// };
 
 function InviteSubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
@@ -66,27 +53,10 @@ export const CriteriaList = ({label, matched, mismatched, missing}: {label: stri
 
 export function PotentialParticipantCard(
     { item }: { item: PotentialParticipantItem }
-//     {
-//   item,
-// //   onInvite,
-// //   onView,
-// //   onSave,
-// }: {
-//   item: { userId: string; name: string | null; breakdown: Breakdown; 
-//     avatarBase: typeof AVATAR_STYLE[number]; 
-//     avatarAccessory: typeof AVATAR_ACCESSORY_KEYS[number];  
-//     avatarBg: typeof AVATAR_BACKGROUND[number];   
-//     };
-// //   onInvite: (userId: string) => void;
-// //   onView: (userId: string) => void;
-// //   onSave: (userId: string) => void;
-// }
 ) {
   const b = item.breakdown;
   return (
-        <Card
-        // className="w-full max-w-sm"
-        >
+        <Card>
             <CardHeader >
                 <div  className="flex space-x-4 items-center min-w-0">
                     <div className="flex-shrink-0">
@@ -94,9 +64,6 @@ export function PotentialParticipantCard(
                     </div>
                     <p className="text-body font-bold truncate min-w-0">{item.name}</p>
                 </div>
-                {/* <Link href={`/recruitment/${study.slug}`}> */}
-                    {/* <h2 className="text-subtitle text-center">{item.name}</h2> */}
-                {/* </Link> */}
             </CardHeader>
             <CardContent>
                 <div className="flex flex-col flex-center">
