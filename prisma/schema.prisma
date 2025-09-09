@@ -137,7 +137,6 @@ model Participation {
   workflowStepStatuses ParticipantWorkflowStepStatus[]
   thankYouCertificate ThankYouCertificate?
 
-// 防止同一 user 重覆報名同一 study
    @@unique([userId, studyId])
 }
 
@@ -152,7 +151,7 @@ model Invitation {
   study     Study   @relation(fields: [studyId], references: [id], onDelete: Cascade)
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([studyId, userId]) // 一個人對同一研究只能有一筆邀請
+  @@unique([studyId, userId]) 
   @@index([studyId, status])
   @@index([userId, status])
 }
@@ -429,8 +428,3 @@ enum ManualDecision {
   Fail
   Unsure
 }
-
-
-// generator erd {
-//   provider = "prisma-erd-generator"
-// }
