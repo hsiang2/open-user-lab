@@ -3,7 +3,8 @@
 This app uses Next.js, React, TypeScript, Prisma (PostgreSQL), and NextAuth.
 
 - **Live demo (Vercel):** <https://open-user-lab.vercel.app>
-
+- **Video demo:** <https://youtu.be/9PhscN0IUcM>
+  
 ---
 
 ## Setup
